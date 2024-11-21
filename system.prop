@@ -1,0 +1,163 @@
+Thanks To @T3SL4
+
+# begin product/etc/build.prop
+
+# begin common build properties
+ro.product.product.brand=[Product Product Brand]
+ro.product.product.device=[Product Product Device]
+ro.product.product.manufacturer=[Product Product Manufacturer]
+ro.product.product.model=[Product Product Model]
+ro.product.product.name=[Product Product Name]
+ro.product.build.date=[Product Build Date]
+ro.product.build.date.utc=[Product Build Date UTC]
+ro.product.build.fingerprint=[Product Build Fingerprint]
+ro.product.build.id=[Product Build ID]
+ro.product.build.tags=[Product Build Tags]
+ro.product.build.type=[Product Build Type]
+ro.product.build.version.incremental=[Product Build Version Incremental]
+ro.product.build.version.release=[Product Build Version Release]
+ro.product.build.version.release_or_codename=[Product Build Version Release or Codename]
+ro.product.build.version.sdk=[Product Build Version SDK]
+# end common build properties
+
+# begin PRODUCT_PRODUCT_PROPERTIES
+ro.support_one_handed_mode=[Support One-Handed Mode]
+ro.charger.enable_suspend=[Charger Enable Suspend]
+ro.opa.eligible_device=[OPA Eligible Device]
+ro.com.google.ime.bs_theme=[Google IME BS Theme]
+ro.com.google.ime.theme_id=[Google IME Theme ID]
+ro.com.google.ime.system_lm_dir=[Google IME System LM Dir]
+# end PRODUCT_PRODUCT_PROPERTIES
+
+# end product/etc/build.prop
+
+# begin vendor/build.prop
+
+# begin common build properties
+ro.product.vendor.brand=[Product Vendor Brand]
+ro.product.vendor.device=[Product Vendor Device]
+ro.product.vendor.manufacturer=[Product Vendor Manufacturer]
+ro.product.vendor.model=[Product Vendor Model]
+ro.product.vendor.name=[Product Vendor Name]
+ro.vendor.build.date=[Vendor Build Date]
+ro.vendor.build.date.utc=[Vendor Build Date UTC]
+ro.vendor.build.fingerprint=[Vendor Build Fingerprint]
+ro.vendor.build.id=[Vendor Build ID]
+ro.vendor.build.tags=[Vendor Build Tags]
+ro.vendor.build.type=[Vendor Build Type]
+ro.vendor.build.version.incremental=[Vendor Build Version Incremental]
+ro.vendor.build.version.release=[Vendor Build Version Release]
+ro.vendor.build.version.release_or_codename=[Vendor Build Version Release or Codename]
+ro.vendor.build.version.sdk=[Vendor Build Version SDK]
+# end common build properties
+
+# begin ADDITIONAL_VENDOR_PROPERTIES
+ro.vendor.build.security_patch=[Vendor Build Security Patch]
+# end ADDITIONAL_VENDOR_PROPERTIES
+
+# begin BOOTIMAGE_build_prop to_system_propERTIES
+ro.bootimage.build.date=[Bootimage Build Date]
+ro.bootimage.build.date.utc=[Bootimage Build Date UTC]
+ro.bootimage.build.fingerprint=[Bootimage Build Fingerprint]
+# end BOOTIMAGE_build_prop to_system_propERTIES
+
+# begin PRODUCT_PROPERTY_OVERRIDES
+persist.rcs.supported=[RCS Supported]
+persist.sysui.monet=[SysUI Monet]
+# end PRODUCT_PROPERTY_OVERRIDES
+
+# end vendor/build.prop
+
+# begin vendor/odm/etc/build.prop
+
+# begin common build properties
+ro.product.odm.brand=[Product ODM Brand]
+ro.product.odm.device=[Product ODM Device]
+ro.product.odm.manufacturer=[Product ODM Manufacturer]
+ro.product.odm.model=[Product ODM Model]
+ro.product.odm.name=[Product ODM Name]
+ro.odm.build.date=[ODM Build Date]
+ro.odm.build.date.utc=[ODM Build Date UTC]
+ro.odm.build.fingerprint=[ODM Build Fingerprint]
+ro.odm.build.id=[ODM Build ID]
+ro.odm.build.tags=[ODM Build Tags]
+ro.odm.build.type=[ODM Build Type]
+ro.odm.build.version.incremental=[ODM Build Version Incremental]
+ro.odm.build.version.release=[ODM Build Version Release]
+ro.odm.build.version.release_or_codename=[ODM Build Version Release or Codename]
+ro.odm.build.version.sdk=[ODM Build Version SDK]
+# end common build properties
+
+# end vendor/odm/etc/build.prop
+
+# begin system/system/build.prop
+
+# begin common build properties
+ro.product.system.brand=[Product System Brand]
+ro.product.system.device=[Product System Device]
+ro.product.system.manufacturer=[Product System Manufacturer]
+ro.product.system.model=[Product System Model]
+ro.product.system.name=[Product System Name]
+ro.system.build.date=[System Build Date]
+ro.system.build.date.utc=[System Build Date UTC]
+ro.system.build.fingerprint=[System Build Fingerprint]
+ro.system.build.id=[System Build ID]
+ro.system.build.tags=[System Build Tags]
+ro.system.build.type=[System Build Type]
+ro.system.build.version.incremental=[System Build Version Incremental]
+ro.system.build.version.release=[System Build Version Release]
+ro.system.build.version.release_or_codename=[System Build Version Release or Codename]
+ro.system.build.version.sdk=[System Build Version SDK]
+# end common build properties
+
+# begin build properties
+ro.build.id=[Build ID]
+ro.build.display.id=[Build Display ID]
+ro.build.version.incremental=[Build Version Incremental]
+ro.build.version.sdk=[Build Version SDK]
+ro.build.version.release=[Build Version Release]
+ro.build.version.release_or_codename=[Build Version Release or Codename]
+ro.build.version.security_patch=[Build Version Security Patch]
+ro.build.date=[Build Date]
+ro.build.date.utc=[Build Date UTC]
+ro.build.type=[Build Type]
+ro.build.user=[Build User]
+ro.build.host=[Build Host]
+ro.build.tags=[Build Tags]
+ro.build.flavor=[Build Flavor]
+ro.build.product=[Build Product]
+ro.build.description=[Build Description]
+# end build properties
+
+# begin extra's from /system/build.prop
+ro.build.fingerprint=[Build Fingerprint]
+ro.product.brand=[Product Brand]
+ro.product.device=[Product Device]
+ro.product.manufacturer=[Product Manufacturer]
+ro.product.model=[Product Model]
+ro.product.name=[Product Name]
+# end extra's from /system/build.prop
+
+# end system/system/build.prop
+
+# begin system_ext/etc/build.prop
+
+# begin common build properties
+ro.product.system_ext.brand=[Product System Ext Brand]
+ro.product.system_ext.device=[Product System Ext Device]
+ro.product.system_ext.manufacturer=[Product System Ext Manufacturer]
+ro.product.system_ext.model=[Product System Ext Model]
+ro.product.system_ext.name=[Product System Ext Name]
+ro.system_ext.build.date=[System Ext Build Date]
+ro.system_ext.build.date.utc=[System Ext Build Date UTC]
+ro.system_ext.build.fingerprint=[System Ext Build Fingerprint]
+ro.system_ext.build.id=[System Ext Build ID]
+ro.system_ext.build.tags=[System Ext Build Tags]
+ro.system_ext.build.type=[System Ext Build Type]
+ro.system_ext.build.version.incremental=[System Ext Build Version Incremental]
+ro.system_ext.build.version.release=[System Ext Build Version Release]
+ro.system_ext.build.version.release_or_codename=[System Ext Build Version Release or Codename]
+ro.system_ext.build.version.sdk=[System Ext Build Version SDK]
+# end common build properties
+
+# end system_ext/etc/build.prop

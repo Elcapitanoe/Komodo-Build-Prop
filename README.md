@@ -17,5 +17,8 @@ Spoof your Android device to appear as a Pixel 9 Pro XL (Komodo).
 ## Latest Release
 [Download Here](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases)
 
+## Disclaimer
+We are not responsible for any potential issues, damages, or malfunctions that may occur as a result of using this module. This includes, but is not limited to, system instability, data loss, or damage to your device. It is highly recommended to make a full backup of your device before installation.
+
 ## Special Thanks
 [@0x11DFE](https://github.com/0x11DFE) aka T3SL4

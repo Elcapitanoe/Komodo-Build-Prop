@@ -1,11 +1,11 @@
 <div align="center">
   
-<img alt="UST-license" src="https://img.shields.io/badge/Open_source-MIT-red.svg?logo=git&logoColor=green"/>
-<img src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop.svg?logo=Sublime+Text&logoColor=green&label=Active"/>
-<img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/Elcapitanoe/Komodo-Build-Prop">
-<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop">
+<img alt="UST-license" src="https://img.shields.io/badge/License-GPL-blue.svg?logo=git&logoColor=white"/>
+<img src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop.svg?logo=Sublime+Text&logoColor=white&label=Active&color=blue"/>
+<img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/Elcapitanoe/Komodo-Build-Prop?color=blue">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop?color=blue">
 <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Elcapitanoe/Komodo-Build-Prop">
-<img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FElcapitanoe%2FKomodo-Build-Prop&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=Views&edge_flat=false"/>
+<img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FElcapitanoe%2FKomodo-Build-Prop&count_bg=%231081C2&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=Views&edge_flat=false"/>
 
 </div>
 

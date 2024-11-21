@@ -1,9 +1,13 @@
-[![Elcapitanoe - Komodo-Build-Prop](https://img.shields.io/static/v1?label=Elcapitanoe&message=Komodo-Build-Prop&color=blue&logo=github)](https://github.com/Elcapitanoe/Komodo-Build-Prop "Go to GitHub repo")
-[![stars - Komodo-Build-Prop](https://img.shields.io/github/stars/Elcapitanoe/Komodo-Build-Prop?style=social)](https://github.com/Elcapitanoe/Komodo-Build-Prop)
-[![forks - Komodo-Build-Prop](https://img.shields.io/github/forks/Elcapitanoe/Komodo-Build-Prop?style=social)](https://github.com/Elcapitanoe/Komodo-Build-Prop)
-[![Total Downloads](https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total?color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop)
-[![GitHub tag](https://img.shields.io/github/tag/Elcapitanoe/Komodo-Build-Prop?include_prereleases=&sort=semver&color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases/)
-[![issues - Komodo-Build-Prop](https://img.shields.io/github/issues/Elcapitanoe/Komodo-Build-Prop?color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop/issues)
+<div align="center">
+  
+<img alt="UST-license" src="https://img.shields.io/badge/Open_source-MIT-red.svg?logo=git&logoColor=green"/>
+<img src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop.svg?logo=Sublime+Text&logoColor=green&label=Active"/>
+<img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/Elcapitanoe/Komodo-Build-Prop">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop">
+<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Elcapitanoe/Komodo-Build-Prop">
+<img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FElcapitanoe%2FKomodo-Build-Prop&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=Views&edge_flat=false"/>
+
+</div>
 
 # Pixel Prop Magisk Module  
 Spoof your Android device to appear as a Pixel 9 Pro XL (Komodo).

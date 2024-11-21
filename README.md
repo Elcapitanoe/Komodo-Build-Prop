@@ -1,14 +1,9 @@
 # Komodo Build Prop
-![Total Downloads](https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total)  
-![Build Status](https://img.shields.io/github/workflow/status/Elcapitanoe/Komodo-Build-Prop/CI)  
-![License](https://img.shields.io/github/license/Elcapitanoe/Komodo-Build-Prop)  
+![Total Downloads](https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total)   
 ![Version](https://img.shields.io/github/v/release/Elcapitanoe/Komodo-Build-Prop)  
 ![GitHub stars](https://img.shields.io/github/stars/Elcapitanoe/Komodo-Build-Prop?style=social)  
-![Forks](https://img.shields.io/github/forks/Elcapitanoe/Komodo-Build-Prop?style=social)  
-![Issues](https://img.shields.io/github/issues/Elcapitanoe/Komodo-Build-Prop)  
-![Pull Requests](https://img.shields.io/github/issues-pr/Elcapitanoe/Komodo-Build-Prop)  
+![Forks](https://img.shields.io/github/forks/Elcapitanoe/Komodo-Build-Prop?style=social) 
 ![Contributors](https://img.shields.io/github/contributors/Elcapitanoe/Komodo-Build-Prop)  
-![Dependencies](https://img.shields.io/github/dependencies/npm/Elcapitanoe/Komodo-Build-Prop) 
 
 # Pixel Prop Magisk Module  
 Spoof your Android device to appear as a Pixel 9 Pro XL (Komodo).

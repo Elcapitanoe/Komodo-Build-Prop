@@ -3,7 +3,6 @@
 [![forks - Komodo-Build-Prop](https://img.shields.io/github/forks/Elcapitanoe/Komodo-Build-Prop?style=social)](https://github.com/Elcapitanoe/Komodo-Build-Prop)
 [![Total Downloads](https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total?color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop)
 [![GitHub tag](https://img.shields.io/github/tag/Elcapitanoe/Komodo-Build-Prop?include_prereleases=&sort=semver&color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases/)
-[![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 [![issues - Komodo-Build-Prop](https://img.shields.io/github/issues/Elcapitanoe/Komodo-Build-Prop?color=blue)](https://github.com/Elcapitanoe/Komodo-Build-Prop/issues)
 
 # Pixel Prop Magisk Module  

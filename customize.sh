@@ -1,42 +1,112 @@
-# Module variables
-SYS_PROP_MANUFACTURER=`grep_prop ro.product.system.manufacturer`
-MOD_PROP_MANUFACTURER=`grep_prop ro.product.system.manufacturer $MODPATH/system.prop`
-MOD_PROP_MODEL=`grep_prop ro.product.model $MODPATH/system.prop`
-MOD_PROP_PRODUCT=`grep_prop ro.build.product $MODPATH/system.prop | tr '[:lower:]' '[:upper:]'`
-MOD_PROP_VERSION=`grep_prop ro.build.version.release $MODPATH/system.prop`
-MOD_PROP_SECURITYPATCH=`grep_prop ro.build.version.security_patch $MODPATH/system.prop`
-MOD_PROP_VERSIONCODE=`date -d $MOD_PROP_SECURITYPATCH '+%y%m%d'`
-MOD_PROP_MONTH=`date -d $MOD_PROP_SECURITYPATCH '+%B'`
-MOD_PROP_YEAR=`date -d $MOD_PROP_SECURITYPATCH '+%Y'`
+#!/system/bin/busybox sh
+
+# Function to find build & system properties within a specified directory.
+find_prop_files() {
+    dir="$1"
+    maxdepth="$2"
+    maxdepth=${maxdepth:-3}
+
+    find "$dir" -maxdepth "$maxdepth" -type f \( -name 'build.prop' -o -name 'system.prop' \) -print 2>/dev/null
+}
+
+# Function to grep a property value from a list of files
+grep_prop() {
+    PROP="$1"
+    shift
+    FILES_or_VAR="$@"
+
+    if [ -n "$FILES_or_VAR" ]; then
+        echo "$FILES_or_VAR" | grep -m1 "^$PROP=" 2>/dev/null | cut -d= -f2- | head -n 1
+    fi
+}
+
+# Function that enumerate true .sh files in MODPATH then checksum them
+checksum_sha256() {
+    for file in "$MODPATH"/*.sh "$MODPATH"/META-INF/com/google/android/update-binary "$MODPATH"/META-INF/com/google/android/updater-script; do
+        if [ -f "$file" ]; then
+            sha256_file="$file.sha256"
+
+            if [ -s "$sha256_file" ]; then
+                expected_hash=$(cat "$sha256_file")
+                actual_hash=$(sha256sum "$file" | awk '{print $1}')
+
+                if [ "$expected_hash" != "$actual_hash" ]; then
+                    ui_print "***************************************"
+                    ui_print " ! Warning: SHA256 mismatch for $file !"
+                    ui_print " ! Expected: $expected_hash !"
+                    ui_print " ! Actual:   $actual_hash !"
+                    abort "***************************************"
+                fi
+            else
+                ui_print " ! Warning: SHA256 file not found or empty for $file"
+            fi
+        fi
+    done
+}
+
+# Prevent the case module is set to be removed at install
+[ -f "$MODPATH/remove" ] && rm -f "$MODPATH/remove"
+
+# Define the path of root manager applet bin directories using find and set it to $PATH then export it
+if ! command -v busybox >/dev/null 2>&1; then
+    TOYS_PATH=$(find "/data/adb" -maxdepth 3 \( -name busybox -o -name ksu_susfs \) -exec dirname {} \; | sort -u | tr '\n' ':')
+    export PATH="${PATH:+${PATH}:}${TOYS_PATH%:}"
+fi
+
+# Define the props path
+MODPROP_FILES=$(find_prop_files "$MODPATH/" 1)
+SYSPROP_FILES=$(find_prop_files "/" 2)
+
+# Store the content of all prop files in a variable
+MODPROP_CONTENT=$(echo "$MODPROP_FILES" | xargs cat)
+SYSPROP_CONTENT=$(echo "$SYSPROP_FILES" | xargs cat)
+
+# Module properties
+MODPROP_MODEL=$(grep_prop "ro.product.vendor.model" "$MODPROP_CONTENT")
+MODPROP_PRODUCT=$(grep_prop "ro.product.vendor.name" "$MODPROP_CONTENT" | tr '[:lower:]' '[:upper:]')
+MODPROP_VERSION=$(grep_prop "ro.build.version.release" "$MODPROP_CONTENT")
+MODPROP_SECURITYPATCH=$(grep_prop "ro.build.version.security_patch" "$MODPROP_CONTENT")
+MODPROP_SDK=$(grep_prop "ro.build.version.sdk" "$MODPROP_CONTENT")
+MODPROP_VERSIONCODE=$(date -d "$MODPROP_SECURITYPATCH" '+%y%m%d')
+MODPROP_MONTH=$(date -d "$MODPROP_SECURITYPATCH" '+%B')
+MODPROP_YEAR=$(date -d "$MODPROP_SECURITYPATCH" '+%Y')
+
+# System properties
+SYSPROP_SDK=$(grep_prop "ro.build.version.sdk" "$SYSPROP_CONTENT")
+
+# Abort if is flashed within recovery
+if ! $BOOTMODE; then
+    ui_print "****************************************************"
+    ui_print " ! Install from Recovery is NOT supported !"
+    ui_print " ! Please install from Magisk / KernelSU / APatch !"
+    ui_print " ! Recovery sucks !"
+    abort "****************************************************"
+fi
+
+# Warn the user about potential SDK failures
+if [ "$SYSPROP_SDK" -lt "$MODPROP_SDK" ]; then
+    ui_print "*************************************"
+    ui_print " ! YOUR SYSTEM MIGHT SOFT-BRICK !"
+    ui_print " ! SYSTEM SDK: $SYSPROP_SDK !"
+    ui_print " ! MODULE SDK: $MODPROP_SDK !"
+    ui_print " ! SENSITIVE/SAFE MODE RECOMMENDED !"
+    ui_print "*************************************"
+fi
 
 # Print head message
-ui_print "- Installing, $MOD_PROP_MODEL ($MOD_PROP_PRODUCT) Prop - $MOD_PROP_MONTH $MOD_PROP_YEAR"
+ui_print "- Installing, $MODPROP_MODEL ($MODPROP_PRODUCT) [A$MODPROP_VERSION-SP$MODPROP_VERSIONCODE] - $MODPROP_MONTH $MODPROP_YEAR"
 
-# Checking if the system sdk matches the module sdk
-MOD_API=`grep_prop ro.build.version.sdk $MODPATH/system.prop | grep -ohE '[0-9]{2}'`
+# Checksum SHA256
+checksum_sha256
 
-# Make sure device manufacturer was not disturbed 
-# in order to fix few apps such as camera on Xiaomi devices
-if [ $SYS_PROP_MANUFACTURER == $MOD_PROP_MANUFACTURER ]; then
-  ui_print "- MANUFACTURER=$SYS_PROP_MANUFACTURER, running unsafe mode"
-else
-  sed -i 's/^ro.product.system.manufacturer/# ro.product.system.manufacturer/' $MODPATH/system.prop
-  ui_print "- MANUFACTURER=$SYS_PROP_MANUFACTURER, running safe mode"
-fi
+# Running the gms_doze using busybox
+# [ -f "$MODPATH/gms_doze.sh" ] && busybox sh "$MODPATH"/gms_doze.sh 2>&1
 
-# Make sure device API matches the one on the prop in order to avoid bootloop
-if [ $API -gt $MOD_API ]; then
-  ui_print "- SDK=$API, running unsafe mode"
-else
-  sed -i 's/^ro.build.version.sdk/# ro.build.version.sdk/' $MODPATH/system.prop
-  ui_print "- SDK=$API, running safe mode"
-fi
+# Running the action early using busybox
+[ -f "$MODPATH/action.sh" ] && busybox sh "$MODPATH"/action.sh 2>&1
 
-# Remove comments from files and place them, add blank line to end if not already present
-# Scripts
-for i in $(find $MODPATH -type f -name "*.sh" -o -name "*.prop" -o -name "*.rule"); do
-  [ -f $i ] && { sed -i -e "/^#/d" -e "/^ *$/d" $i; [ "$(tail -1 $i)" ] && echo "" >> $i; } || continue
-done
+# Running the service early using busybox
+[ -f "$MODPATH/service.sh" ] && busybox sh "$MODPATH"/service.sh 2>&1
 
 # Print footer message
-ui_print "- Thanks to @T3SL4"
+ui_print "- Script by Tesla, Telegram: @T3SL4 | t.me/PixelProps"

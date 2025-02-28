@@ -10,7 +10,7 @@
 </div>
 
 # Pixel Prop Magisk Module  
-Spoof your Android device to appear as a Pixel 9 Pro XL (Komodo).
+Spoof your Android device to appear as a Pixel 9 Pro XL (Komodo) - (Komodo_Beta).
 
 ## Installation Instructions 
 1. Download the latest Pixel Prop file and transfer it to your device.  

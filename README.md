@@ -13,7 +13,7 @@
 This module enables your Android device to appear as a Pixel 9 Pro XL (Komodo) - (Komodo_Beta).
 
 ## Installation Instructions 
-1. Download the latest Pixel Prop from **"Release Page"** file and transfer it to your device.  
+1. Download the latest Pixel Prop from [Releases Page](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases) file and transfer it to your device.  
 2. Open the Magisk app, tap **"Install from Storage,"** and select the Pixel Prop file.  
 3. The module will flash automatically.  
 4. After flashing, restart your device. Your device should now be recognized as a Pixel 9 Pro XL.

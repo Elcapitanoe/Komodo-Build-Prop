@@ -2,15 +2,12 @@
 # Beautiful Pixel Props https://t.me/PixelProps
 # By @T3SL4
 # Rebuild By @Elcapitanoe
-
 ###
 #-#
 ###
-
 ###
 # begin product/etc/build.prop
 ###
-
 # begin common build properties
 ro.product.brand=[Name Of Brand]
 ro.product.device=[Device Name]

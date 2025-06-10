@@ -7,6 +7,11 @@ This module enables your Android device to appear as a Pixel 9 Pro XL (Komodo) -
 3. The module will flash automatically.  
 4. After flashing, restart your device. Your device should now be recognized as a Pixel 9 Pro XL.
 
+## Tested OS
+1. LineageOS
+2. MIUI
+3. PixelOS
+
 ## Disclaimer
 We assume no responsibility for any issues, damages, or malfunctions that may result from the use of this module. This includes, but is not limited to, system instability, data loss, or damage to your device. It is strongly recommended that you perform a full backup of your device before installation.
 

@@ -112,6 +112,7 @@
          provided by the package. -->
     <allow-association target="com.google.android.as" allowed="com.android.bluetooth" />
     <allow-association target="com.google.android.as" allowed="com.android.bluetooth.services" />
+    <allow-association target="com.google.android.as" allowed="com.android.phone" />
     <allow-association target="com.google.android.as" allowed="com.android.providers.contacts" />
     <allow-association target="com.google.android.as" allowed="com.android.providers.media" />
     <allow-association target="com.google.android.as" allowed="com.android.providers.telephony" />

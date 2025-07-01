@@ -13,8 +13,8 @@ This module makes your Android device appear as a Google Pixel 9 Pro XL (Komodo)
 
 ## If Your Device Bootloops/SoftBrick
 1. Boot into your custom recovery (e.g., TWRP)
-2. Navigate to the /data/adb/modules/ directory
-3. Look for the Komodo_Props or Komodo_beta_Props folder
+2. Navigate to the **/data/adb/modules/** directory
+3. Look for the **Komodo_Props** or **Komodo_beta_Props** folder
 4. Delete that folder and reboot your system
 
 ## Disclaimer

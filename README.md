@@ -1,19 +1,15 @@
 # Pixel Prop Magisk Module  
-This module enables your Android device to appear as a Pixel 9 Pro XL (Komodo) - (Komodo_Beta).
+This module makes your Android device appear as a Google Pixel 9 Pro XL (Komodo) - (Komodo_Beta).
 
-## Installation Instructions 
-1. Download the latest Pixel Prop file and transfer it to your device.  
-2. Open the Magisk app, tap **"Install from Storage,"** and select the Pixel Prop file.  
-3. The module will flash automatically.  
-4. After flashing, restart your device. Your device should now be recognized as a Pixel 9 Pro XL.
-
-## Tested OS
-1. LineageOS
-2. MIUI
-3. PixelOS
+## Installation Instructions
+1. Download the latest Pixel Prop file and transfer it to your device.
+2. Open the Magisk App/KernelSU App, tap **"Install from Storage,"** and choose the Pixel Prop file.
+3. You’ll be asked a few questions, press the **Volume Up** button to say Yes, **Volume Down** for No, and the **Power button** to Cancel.
+   *(Note: If you're not sure what the questions mean, just press "Yes" until the process is complete.)*
+4. Once it's done flashing, restart your device. It should now be recognized as a Pixel 9 Pro XL.
 
 ## Disclaimer
-We assume no responsibility for any issues, damages, or malfunctions that may result from the use of this module. This includes, but is not limited to, system instability, data loss, or damage to your device. It is strongly recommended that you perform a full backup of your device before installation.
+We are not responsible for any issues, damage, or malfunctions that may result from using this module. This includes, but is not limited to, system instability, data loss, or hardware damage. A full backup is strongly recommended before installation.
 
 ## Special Thanks
 [@0x11DFE](https://github.com/0x11DFE) aka T3SL4

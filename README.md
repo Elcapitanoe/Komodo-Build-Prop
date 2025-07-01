@@ -1,4 +1,4 @@
-# Pixel Prop Magisk Module  
+# Pixel Prop Module  
 This module makes your Android device appear as a Google Pixel 9 Pro XL (Komodo) - (Komodo_Beta).
 
 ## Installation Instructions

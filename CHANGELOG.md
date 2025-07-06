@@ -1,5 +1,3 @@
-# Changelog
-
 ## 01 July 2025
 - Update sysconfig for association and power/data save exceptions
 

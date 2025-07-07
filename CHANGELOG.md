@@ -1,27 +1,26 @@
-## 01 July 2025
-- Update sysconfig for association and power/data save exceptions
-- Update device props
+#### 2025-07-01
+- Refined system configuration: added association rules and optimized power/data saving exceptions  
+- Updated device properties for improved compatibility
 
-## 21 June 2025
-- Remove Google Pixel boot animation files
+#### 2025-06-21
+- Removed Google Pixel boot animation assets
 
-## 10 June 2025
-- Minor Update
+#### 2025-06-10
+- Minor maintenance updates
 
-## 06 March 2025
-- Updated all build-related strings in the system.prop
-- Updated all build-related strings in the module.prop
+#### 2025-03-06
+- Standardized build identifiers in `system.prop` and `module.prop`
 
-## 05 March 2025
-- Resolved multiple installation errors
-- Implemented Google Pixel boot animation  
-- Hashes updated (SHA‑1/SHA‑256/SHA‑384/SHA‑512)
+#### 2025-03-05
+- Fixed multiple installation errors  
+- Integrated Google Pixel boot animation  
+- Regenerated file hashes (SHA‑1, SHA‑256, SHA‑384, SHA‑512)
 
-## 01 March 2025
-- Minor Update  
+#### 2025-03-01
+- Minor maintenance updates
 
-## 28 February 2025
-- Minor Update
+#### 2025-02-28
+- Minor maintenance updates
 
-## 21 November 2024
-- Beta Test
+#### 2024-11-21
+- Beta testing phase complete

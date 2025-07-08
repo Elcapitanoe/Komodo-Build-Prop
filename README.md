@@ -33,7 +33,7 @@ A full backup is **strongly recommended** before installation.
 ---
 
 ## 🙏 Credits & Support
-- Special thanks to **@0x11DFE (T3SL4)**
+- Special thanks to [@0x11DFE](https://github.com/0x11DFE)
 - Bug reports can be filed via [Issues](https://github.com/Elcapitanoe/Komodo-Build-Prop/issues)
 
 ---

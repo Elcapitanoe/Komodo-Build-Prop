@@ -1,5 +1,5 @@
 ## Jul 8, 2025
-Synced props with the latest beta build `beta_BP31.250523.010` and shifted development focus to `Komodo_Beta Build Props`.
+Synced props with the latest beta build `beta_BP31.250523.010` and shifted development focus to `Komodo_Beta` Build Props.
 
 ## Jul 1, 2025
 Updated sysconfig for association rules and power/data‑saving exceptions, and synchronized props with build `BP11.241210.004`.

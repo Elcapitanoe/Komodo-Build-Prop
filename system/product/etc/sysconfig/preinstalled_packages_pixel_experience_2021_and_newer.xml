@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- User type configuration for packages to preinstall in pixel 2021 and newer devices, per user type,
+     Documentation at frameworks/base/data/etc/preinstalled-packages-platform.xml
+-->
+<config>
+    <!-- Now Playing  -->
+    <install-in-user-type package="com.google.android.apps.pixel.nowplaying">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+</config>

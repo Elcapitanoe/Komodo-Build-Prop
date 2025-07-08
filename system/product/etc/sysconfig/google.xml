@@ -131,6 +131,12 @@
     <!-- Pixel Launcher can bind to the open-source network component. -->
     <allow-association target="com.google.android.as.oss" allowed="com.google.android.apps.nexuslauncher" />
 
+    <!-- Google app can bind to the open-source network component. -->
+    <allow-association target="com.google.android.as.oss" allowed="com.google.android.googlequicksearchbox" />
+
+    <!-- Gboard can bind to the AI services open-source network component. -->
+    <allow-association target="com.google.android.as.oss" allowed="com.google.android.inputmethod.latin" />
+
     <!-- Specify the explicit set of other applications whose app data directories are
         accessible by other applications. -->
     <app-data-isolation-whitelisted-app package="com.google.android.gms" />

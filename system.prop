@@ -1,7 +1,6 @@
 ##
 # Beautiful Pixel Props https://t.me/PixelProps
 # By @T3SL4
-# Rebuild By @Elcapitanoe
 ##
 
 ###
@@ -28,16 +27,16 @@ ro.product.device_for_attestation=komodo
 ro.product.manufacturer_for_attestation=Google
 ro.product.model_for_attestation=Pixel 9 Pro XL
 ro.product.name_for_attestation=komodo
-ro.product.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.product.build.date.utc=1737010146
-ro.product.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.product.build.id=BP11.241210.004
+ro.product.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.product.build.date.utc=1750288730
+ro.product.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.product.build.id=BP31.250523.010
 ro.product.build.tags=release-keys
 ro.product.build.type=user
-ro.product.build.version.incremental=12926906
-ro.product.build.version.release=15
-ro.product.build.version.release_or_codename=15
-ro.product.build.version.sdk=35
+ro.product.build.version.incremental=13667654
+ro.product.build.version.release=16
+ro.product.build.version.release_or_codename=16
+ro.product.build.version.sdk=36
 # end common build properties
 
 # begin PRODUCT_PRODUCT_PROPERTIES
@@ -56,16 +55,16 @@ ro.product.bootimage.device=komodo
 ro.product.bootimage.manufacturer=Google
 ro.product.bootimage.model=Pixel 9 Pro XL
 ro.product.bootimage.name=komodo
-ro.bootimage.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.bootimage.build.date.utc=1737010146
-ro.bootimage.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.bootimage.build.id=BP11.241210.004
+ro.bootimage.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.bootimage.build.date.utc=1750288730
+ro.bootimage.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.bootimage.build.id=BP31.250523.010
 ro.bootimage.build.tags=release-keys
 ro.bootimage.build.type=user
-ro.bootimage.build.version.incremental=12926906
-ro.bootimage.build.version.release=15
-ro.bootimage.build.version.release_or_codename=15
-ro.bootimage.build.version.sdk=35
+ro.bootimage.build.version.incremental=13667654
+ro.bootimage.build.version.release=16
+ro.bootimage.build.version.release_or_codename=16
+ro.bootimage.build.version.sdk=36
 # end PRODUCT_BOOTIMAGE_PROPERTIES
 
 ###
@@ -86,16 +85,16 @@ ro.product.vendor.device=komodo
 ro.product.vendor.manufacturer=Google
 ro.product.vendor.model=Pixel 9 Pro XL
 ro.product.vendor.name=komodo_beta
-ro.vendor.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.vendor.build.date.utc=1737010146
-ro.vendor.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.vendor.build.id=BP11.241210.004
+ro.vendor.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.vendor.build.date.utc=1750288730
+ro.vendor.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.vendor.build.id=BP31.250523.010
 ro.vendor.build.tags=release-keys
 ro.vendor.build.type=user
-ro.vendor.build.version.incremental=12926906
-ro.vendor.build.version.release=15
-ro.vendor.build.version.release_or_codename=15
-ro.vendor.build.version.sdk=35
+ro.vendor.build.version.incremental=13667654
+ro.vendor.build.version.release=16
+ro.vendor.build.version.release_or_codename=16
+ro.vendor.build.version.sdk=36
 # end common build properties
 
 # begin PRODUCT_VENDOR_PROPERTIES
@@ -105,7 +104,7 @@ ro.soc.manufacturer=Google
 
 # begin ADDITIONAL_VENDOR_PROPERTIES
 ro.product.first_api_level=34
-ro.vendor.build.security_patch=2025-01-05
+ro.vendor.build.security_patch=2025-06-05
 # end ADDITIONAL_VENDOR_PROPERTIES
 
 # begin PRODUCT_PROPERTY_OVERRIDES
@@ -139,16 +138,16 @@ ro.product.odm.device=komodo
 ro.product.odm.manufacturer=Google
 ro.product.odm.model=Pixel 9 Pro XL
 ro.product.odm.name=komodo_beta
-ro.odm.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.odm.build.date.utc=1737010146
-ro.odm.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.odm.build.id=BP11.241210.004
+ro.odm.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.odm.build.date.utc=1750288730
+ro.odm.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.odm.build.id=BP31.250523.010
 ro.odm.build.tags=release-keys
 ro.odm.build.type=user
-ro.odm.build.version.incremental=12926906
-ro.odm.build.version.release=15
-ro.odm.build.version.release_or_codename=15
-ro.odm.build.version.sdk=35
+ro.odm.build.version.incremental=13667654
+ro.odm.build.version.release=16
+ro.odm.build.version.release_or_codename=16
+ro.odm.build.version.sdk=36
 # end common build properties
 
 ###
@@ -165,16 +164,16 @@ ro.product.odm_dlkm.device=komodo
 ro.product.odm_dlkm.manufacturer=Google
 ro.product.odm_dlkm.model=Pixel 9 Pro XL
 ro.product.odm_dlkm.name=komodo_beta
-ro.odm_dlkm.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.odm_dlkm.build.date.utc=1737010146
-ro.odm_dlkm.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.odm_dlkm.build.id=BP11.241210.004
+ro.odm_dlkm.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.odm_dlkm.build.date.utc=1750288730
+ro.odm_dlkm.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.odm_dlkm.build.id=BP31.250523.010
 ro.odm_dlkm.build.tags=release-keys
 ro.odm_dlkm.build.type=user
-ro.odm_dlkm.build.version.incremental=12926906
-ro.odm_dlkm.build.version.release=15
-ro.odm_dlkm.build.version.release_or_codename=15
-ro.odm_dlkm.build.version.sdk=35
+ro.odm_dlkm.build.version.incremental=13667654
+ro.odm_dlkm.build.version.release=16
+ro.odm_dlkm.build.version.release_or_codename=16
+ro.odm_dlkm.build.version.sdk=36
 # end common build properties
 
 ###
@@ -195,16 +194,16 @@ ro.product.vendor_dlkm.device=komodo
 ro.product.vendor_dlkm.manufacturer=Google
 ro.product.vendor_dlkm.model=Pixel 9 Pro XL
 ro.product.vendor_dlkm.name=komodo_beta
-ro.vendor_dlkm.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.vendor_dlkm.build.date.utc=1737010146
-ro.vendor_dlkm.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.vendor_dlkm.build.id=BP11.241210.004
+ro.vendor_dlkm.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.vendor_dlkm.build.date.utc=1750288730
+ro.vendor_dlkm.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.vendor_dlkm.build.id=BP31.250523.010
 ro.vendor_dlkm.build.tags=release-keys
 ro.vendor_dlkm.build.type=user
-ro.vendor_dlkm.build.version.incremental=12926906
-ro.vendor_dlkm.build.version.release=15
-ro.vendor_dlkm.build.version.release_or_codename=15
-ro.vendor_dlkm.build.version.sdk=35
+ro.vendor_dlkm.build.version.incremental=13667654
+ro.vendor_dlkm.build.version.release=16
+ro.vendor_dlkm.build.version.release_or_codename=16
+ro.vendor_dlkm.build.version.sdk=36
 # end common build properties
 
 ###
@@ -225,40 +224,40 @@ ro.product.system.device=generic
 ro.product.system.manufacturer=Google
 ro.product.system.model=mainline
 ro.product.system.name=mainline
-ro.system.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.system.build.date.utc=1737010146
-ro.system.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.system.build.id=BP11.241210.004
+ro.system.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.system.build.date.utc=1750288730
+ro.system.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.system.build.id=BP31.250523.010
 ro.system.build.tags=release-keys
 ro.system.build.type=user
-ro.system.build.version.incremental=12926906
-ro.system.build.version.release=15
-ro.system.build.version.release_or_codename=15
-ro.system.build.version.sdk=35
+ro.system.build.version.incremental=13667654
+ro.system.build.version.release=16
+ro.system.build.version.release_or_codename=16
+ro.system.build.version.sdk=36
 # end common build properties
 
 # begin build properties
-ro.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.build.id=BP11.241210.004
-ro.build.display.id=BP11.241210.004
+ro.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.build.id=BP31.250523.010
+ro.build.display.id=BP31.250523.010
 ro.build.product=komodo
-ro.build.description=komodo_beta-user 15 BP11.241210.004 12926906 release-keys
-ro.build.version.incremental=12926906
-ro.build.version.sdk=35
-ro.build.version.release=15
-ro.build.version.release_or_codename=15
-ro.build.version.security_patch=2025-01-05
-ro.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.build.date.utc=1737010146
+ro.build.description=komodo_beta-user 16 BP31.250523.010 13667654 release-keys
+ro.build.version.incremental=13667654
+ro.build.version.sdk=36
+ro.build.version.release=16
+ro.build.version.release_or_codename=16
+ro.build.version.security_patch=2025-06-05
+ro.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.build.date.utc=1750288730
 ro.build.type=user
 ro.build.user=android-build
-ro.build.host=r-eaf9838018e7e7ac-dz8r
+ro.build.host=17c1900a2acd
 ro.build.tags=release-keys
 ro.build.flavor=komodo_beta-user
 # end build properties
 
 # begin PRODUCT_SYSTEM_PROPERTIES
-ro.hotword.detection_service_required=true
+ro.hotword.detection_service_required=false
 #end PRODUCT_SYSTEM_PROPERTIES
 
 ###
@@ -279,16 +278,16 @@ ro.product.system_ext.device=komodo
 ro.product.system_ext.manufacturer=Google
 ro.product.system_ext.model=Pixel 9 Pro XL
 ro.product.system_ext.name=komodo_beta
-ro.system_ext.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.system_ext.build.date.utc=1737010146
-ro.system_ext.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.system_ext.build.id=BP11.241210.004
+ro.system_ext.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.system_ext.build.date.utc=1750288730
+ro.system_ext.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.system_ext.build.id=BP31.250523.010
 ro.system_ext.build.tags=release-keys
 ro.system_ext.build.type=user
-ro.system_ext.build.version.incremental=12926906
-ro.system_ext.build.version.release=15
-ro.system_ext.build.version.release_or_codename=15
-ro.system_ext.build.version.sdk=35
+ro.system_ext.build.version.incremental=13667654
+ro.system_ext.build.version.release=16
+ro.system_ext.build.version.release_or_codename=16
+ro.system_ext.build.version.sdk=36
 # end common build properties
 
 ###
@@ -305,16 +304,16 @@ ro.product.system_dlkm.device=komodo
 ro.product.system_dlkm.manufacturer=Google
 ro.product.system_dlkm.model=Pixel 9 Pro XL
 ro.product.system_dlkm.name=komodo_beta
-ro.system_dlkm.build.date=Thu Jan 16 06:49:06 UTC 2025
-ro.system_dlkm.build.date.utc=1737010146
-ro.system_dlkm.build.fingerprint=google/komodo_beta/komodo:15/BP11.241210.004/12926906:user/release-keys
-ro.system_dlkm.build.id=BP11.241210.004
+ro.system_dlkm.build.date=Wed Jun 18 23:18:50 UTC 2025
+ro.system_dlkm.build.date.utc=1750288730
+ro.system_dlkm.build.fingerprint=google/komodo_beta/komodo:16/BP31.250523.010/13667654:user/release-keys
+ro.system_dlkm.build.id=BP31.250523.010
 ro.system_dlkm.build.tags=release-keys
 ro.system_dlkm.build.type=user
-ro.system_dlkm.build.version.incremental=12926906
-ro.system_dlkm.build.version.release=15
-ro.system_dlkm.build.version.release_or_codename=15
-ro.system_dlkm.build.version.sdk=35
+ro.system_dlkm.build.version.incremental=13667654
+ro.system_dlkm.build.version.release=16
+ro.system_dlkm.build.version.release_or_codename=16
+ro.system_dlkm.build.version.sdk=36
 # end common build properties
 
 ###

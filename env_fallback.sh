@@ -14,3 +14,13 @@ fi
 if ! type abort >/dev/null 2>&1; then
   abort() { echo "$@" >&2; exit 1; }
 fi
+
+# Fallback for getprop (Android-only command)
+if ! command -v getprop >/dev/null 2>&1; then
+  getprop() {
+    case "$1" in
+      sys.boot_completed) echo 1 ;; # assume boot complete
+      *) echo "" ;; # return empty string for all other props
+    esac
+  }
+fi

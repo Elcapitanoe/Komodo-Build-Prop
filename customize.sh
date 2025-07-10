@@ -1,4 +1,6 @@
 #!/system/bin/busybox sh
+MODPATH="${0%/*}"
+[ -f "$MODPATH/env_fallback.sh" ] && . "$MODPATH/env_fallback.sh"
 
 # Function to find build & system properties within a specified directory.
 find_prop_files() {

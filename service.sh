@@ -1,6 +1,7 @@
 #!/system/bin/busybox sh
 
 MODPATH="${0%/*}"
+[ -f "$MODPATH/env_fallback.sh" ] && . "$MODPATH/env_fallback.sh"
 
 # If MODPATH is empty or is not default modules path, use current path
 [ -z "$MODPATH" ] || ! echo "$MODPATH" | grep -q '/data/adb/modules/' &&

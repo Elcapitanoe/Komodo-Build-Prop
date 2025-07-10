@@ -1,4 +1,6 @@
 #!/system/bin/sh
+MODPATH="${0%/*}"
+[ -f "$MODPATH/env_fallback.sh" ] && . "$MODPATH/env_fallback.sh"
 
 PIF_DIRS="/data/adb/modules/playintegrityfix/pif.json"
 

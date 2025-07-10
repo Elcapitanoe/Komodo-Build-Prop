@@ -4,6 +4,9 @@ MODPATH="${0%/*}"
 MODNAME="${MODPATH##*/}"
 MAGISKTMP="$(magisk --path)" || MAGISKTMP=/sbin
 
+[ -f "$MODPATH/env_fallback.sh" ] && . "$MODPATH/env_fallback.sh"
+
+
 if [ "$(magisk -V)" -lt 26302 ] || [ "$(/data/adb/ksud -V)" -lt 10818 ]; then
   touch "$MODPATH/disable"
 fi

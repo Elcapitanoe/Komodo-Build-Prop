@@ -27,4 +27,4 @@ jobs:
           done
 
       - name: Lint scripts with shellcheck
-        uses: ludeeus/action-shellcheck@v2
+        uses: ludeeus/action-shellcheck@1.1.0

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  shell-scripts-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make all scripts executable
+        run: |
+          chmod +x ./*.sh
+
+      - name: Run all shell scripts
+        run: |
+          for script in ./*.sh; do
+            echo "▶ Running $script"
+            bash "$script"
+          done
+
+      - name: Lint scripts with shellcheck
+        uses: ludeeus/action-shellcheck@v2

@@ -20,22 +20,17 @@ jobs:
 
             const assets = release.data.assets;
             const tag = release.data.tag_name;
-            const name = release.data.name || tag;
             const date = new Date(release.data.published_at).toISOString().split('T')[0];
-            const body = release.data.body || "_No changelog_";
 
             if (assets.length === 0) {
-              core.setFailed("⚠️ No assets found in the latest release!");
+              core.setFailed("No release assets found.");
               return;
             }
 
-            const sha256 = "aee6d58b5ff97194deff58d8c704d640443bc54c32e18252904963626aec6232";
-
-            core.setOutput("assets", JSON.stringify(assets.map(a => a.browser_download_url)));
+            const asset_urls = assets.map(a => a.browser_download_url);
+            core.setOutput("assets", JSON.stringify(asset_urls));
             core.setOutput("tag", tag);
-            core.setOutput("name", name);
             core.setOutput("date", date);
-            core.setOutput("sha256", sha256);
 
       - name: Download Release Assets
         run: |
@@ -46,25 +41,22 @@ jobs:
             curl -L "$url" -o "assets/$filename"
           done
 
-      - name: Send Telegram Header Message
+      - name: Send Telegram Message (Simple)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          TEXT="🔥 *New Update Released!*\n\n*${{ steps.release.outputs.date }}* \\(`${{ steps.release.outputs.tag }}`\\)\n\nSHA-256: ${{ steps.release.outputs.sha256 }}"
-
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
             -d chat_id="$TELEGRAM_CHAT_ID" \
-            -d text="$TEXT" \
-            -d parse_mode="Markdown"
+            -d parse_mode="Markdown" \
+            -d text="New Update Released!\n\n${{ steps.release.outputs.date }} - Version: ${{ steps.release.outputs.tag }}"
 
-      - name: Send Release Files to Telegram
+      - name: Send Files to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           for file in assets/*; do
-            echo "Mengirim $file ke Telegram..."
             curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
               -F chat_id="$TELEGRAM_CHAT_ID" \
               -F document=@"$file" \

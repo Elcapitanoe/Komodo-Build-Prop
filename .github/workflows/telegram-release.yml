@@ -41,24 +41,20 @@ jobs:
             curl -L "$url" -o "assets/$filename"
           done
 
-      - name: Send Telegram Message (Simple)
+      - name: Send Files to Telegram (clean caption)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
-            -d chat_id="$TELEGRAM_CHAT_ID" \
-            -d parse_mode="Markdown" \
-            -d text="New Update Released!\n\n${{ steps.release.outputs.date }} - Version: ${{ steps.release.outputs.tag }}"
-
-      - name: Send Files to Telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TAG: ${{ steps.release.outputs.tag }}
+          DATE: ${{ steps.release.outputs.date }}
         run: |
           for file in assets/*; do
+            FILENAME=$(basename "$file")
+            CAPTION=$(echo -e "🔥 *New Update Released!*\n\n📅 Date: $DATE\n🏷️ Version: $TAG\n\n📦 File: $FILENAME")
+
             curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
               -F chat_id="$TELEGRAM_CHAT_ID" \
               -F document=@"$file" \
-              -F caption="📦 $(basename "$file")"
+              -F parse_mode="Markdown" \
+              -F caption="$CAPTION"
           done

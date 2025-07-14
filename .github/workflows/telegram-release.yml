@@ -28,13 +28,17 @@ jobs:
               return;
             }
 
+            // SHA-256 dummy placeholder (replace if needed)
+            const sha256 = "aee6d58b5ff97194deff58d8c704d640443bc54c32e18252904963626aec6232";
+
             const asset_urls = assets.map(a => a.browser_download_url);
             core.setOutput("assets", JSON.stringify(asset_urls));
             core.setOutput("title", name);
             core.setOutput("tag", tag);
             core.setOutput("body", body);
+            core.setOutput("sha256", sha256);
 
-      - name: Download Assets
+      - name: Download Release Assets
         run: |
           mkdir assets
           urls=$(echo '${{ steps.release.outputs.assets }}' | jq -r '.[]')
@@ -48,7 +52,15 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          TEXT="🔥 *New Update Released!*\n\n*${{ steps.release.outputs.title }}* (`${{ steps.release.outputs.tag }}`)\n\n${{ steps.release.outputs.body }}"
+          TEXT=$(cat <<EOF
+🔥 *New Update Released!*
+
+*${{ steps.release.outputs.title }}* \(`${{ steps.release.outputs.tag }}`\)
+
+SHA-256: ${{ steps.release.outputs.sha256 }}
+EOF
+          )
+
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d chat_id="$TELEGRAM_CHAT_ID" \
             -d text="$TEXT" \

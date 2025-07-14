@@ -50,7 +50,7 @@ jobs:
         run: |
           for file in assets/*; do
             FILENAME=$(basename "$file")
-            CAPTION=$(echo -e "🔥 *New Update Released!*\n\n📅 Date: $DATE\n🏷️ Version: $TAG\n\n📦 File: $FILENAME")
+            CAPTION=$(echo -e "*New Update Released!*\n\n📅 Date: $DATE\n🏷️ Version: $TAG")
 
             curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
               -F chat_id="$TELEGRAM_CHAT_ID" \

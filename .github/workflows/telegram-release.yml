@@ -1,4 +1,4 @@
-name: Send Latest Release to Telegram
+name: Release to Telegram
 
 on:
   workflow_dispatch:
@@ -29,7 +29,6 @@ jobs:
               return;
             }
 
-            // Dummy SHA-256 placeholder
             const sha256 = "aee6d58b5ff97194deff58d8c704d640443bc54c32e18252904963626aec6232";
 
             core.setOutput("assets", JSON.stringify(assets.map(a => a.browser_download_url)));
@@ -52,14 +51,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          TEXT=$(cat <<EOF
-🔥 *New Update Released!*
-
-*${{ steps.release.outputs.date }}* \(`${{ steps.release.outputs.tag }}`\)
-
-SHA-256: ${{ steps.release.outputs.sha256 }}
-EOF
-          )
+          TEXT="🔥 *New Update Released!*\n\n*${{ steps.release.outputs.date }}* \\(`${{ steps.release.outputs.tag }}`\\)\n\nSHA-256: ${{ steps.release.outputs.sha256 }}"
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -d chat_id="$TELEGRAM_CHAT_ID" \

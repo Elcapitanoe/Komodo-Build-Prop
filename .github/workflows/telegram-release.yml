@@ -1,7 +1,7 @@
-name: Send Latest Release Files to Telegram
+name: Send Latest Release to Telegram
 
 on:
-  workflow_dispatch: # manual trigger
+  workflow_dispatch:
 
 jobs:
   send-release-assets:
@@ -21,6 +21,7 @@ jobs:
             const assets = release.data.assets;
             const tag = release.data.tag_name;
             const name = release.data.name || tag;
+            const date = new Date(release.data.published_at).toISOString().split('T')[0];
             const body = release.data.body || "_No changelog_";
 
             if (assets.length === 0) {
@@ -28,14 +29,13 @@ jobs:
               return;
             }
 
-            // SHA-256 dummy placeholder (replace if needed)
+            // Dummy SHA-256 placeholder
             const sha256 = "aee6d58b5ff97194deff58d8c704d640443bc54c32e18252904963626aec6232";
 
-            const asset_urls = assets.map(a => a.browser_download_url);
-            core.setOutput("assets", JSON.stringify(asset_urls));
-            core.setOutput("title", name);
+            core.setOutput("assets", JSON.stringify(assets.map(a => a.browser_download_url)));
             core.setOutput("tag", tag);
-            core.setOutput("body", body);
+            core.setOutput("name", name);
+            core.setOutput("date", date);
             core.setOutput("sha256", sha256);
 
       - name: Download Release Assets
@@ -55,7 +55,7 @@ jobs:
           TEXT=$(cat <<EOF
 🔥 *New Update Released!*
 
-*${{ steps.release.outputs.title }}* \(`${{ steps.release.outputs.tag }}`\)
+*${{ steps.release.outputs.date }}* \(`${{ steps.release.outputs.tag }}`\)
 
 SHA-256: ${{ steps.release.outputs.sha256 }}
 EOF
@@ -66,7 +66,7 @@ EOF
             -d text="$TEXT" \
             -d parse_mode="Markdown"
 
-      - name: Send Files to Telegram
+      - name: Send Release Files to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

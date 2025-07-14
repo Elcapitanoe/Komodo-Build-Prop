@@ -3,9 +3,9 @@
 # On sensitive key, values when true are basically meant,
 # to set and use the sensitive checks, else when false will ignore the check.
 
-pixelprops.sensitive.device=true
-pixelprops.sensitive.security_patch=true
-pixelprops.sensitive.soc=true
-pixelprops.sensitive.sdk=true
-pixelprops.sensitive.props=true
-pixelprops.sensitive.pihooks=true
+pixelprops.sensitive.device=false
+pixelprops.sensitive.security_patch=false
+pixelprops.sensitive.soc=false
+pixelprops.sensitive.sdk=false
+pixelprops.sensitive.props=false
+pixelprops.sensitive.pihooks=false

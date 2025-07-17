@@ -1,14 +1,16 @@
 #!/system/bin/sh
 
+# Define PlayIntegrityFix configuration paths
 PIF_DIRS="/data/adb/modules/playintegrityfix/pif.json"
 
+# Restore PlayIntegrityFix configuration if module exists
 if [ -d "/data/adb/modules/playintegrityfix" ]; then
-  # Loop true each PIF dirs
+  # Process each PIF configuration file
   for PIF_DIR in $PIF_DIRS; do
-    # If has backup restore it
+    # Restore backup if available
     [ -f "${PIF_DIR}.old" ] && mv "${PIF_DIR}.old" "$PIF_DIR"
 
-    # If the pif.json is missing then we create one from maintained project
+    # Download default PIF configuration if missing
     if [ ! -f "$PIF_DIR" ]; then
       ui_print " -+ Missing $PIF_DIR, Downloading stable one for you."
       wget -O -q --show-progress "$PIF_DIR" "https://raw.githubusercontent.com/chiteroman/PlayIntegrityFix/main/module/pif.json"
@@ -16,10 +18,10 @@ if [ -d "/data/adb/modules/playintegrityfix" ]; then
   done
 fi
 
-# Find install-recovery.sh and set permissions back to default
+# Restore default permissions for recovery scripts
 find /vendor/bin /system/bin -name install-recovery.sh -exec chmod 755 {} \;
 
-# Revert permissions for other files/directories
+# Restore default permissions for sensitive files and directories
 chmod 644 /proc/cmdline
 chmod 644 /proc/net/unix
 chmod 755 /system/addon.d

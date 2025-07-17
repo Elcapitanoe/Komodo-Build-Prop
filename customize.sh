@@ -1,6 +1,6 @@
 #!/system/bin/busybox sh
 
-# Function to find build & system properties within a specified directory.
+# Find build and system property files in specified directory
 find_prop_files() {
     dir="$1"
     maxdepth="$2"
@@ -9,7 +9,7 @@ find_prop_files() {
     find "$dir" -maxdepth "$maxdepth" -type f \( -name 'build.prop' -o -name 'system.prop' \) -print 2>/dev/null
 }
 
-# Function to grep a property value from a list of files
+# Extract property value from file content
 grep_prop() {
     PROP="$1"
     shift
@@ -20,7 +20,7 @@ grep_prop() {
     fi
 }
 
-# Function that enumerate true .sh files in MODPATH then checksum them
+# Verify SHA256 checksums for all shell scripts and binaries
 checksum_sha256() {
     for file in "$MODPATH"/*.sh "$MODPATH"/META-INF/com/google/android/update-binary "$MODPATH"/META-INF/com/google/android/updater-script; do
         if [ -f "$file" ]; then
@@ -44,24 +44,24 @@ checksum_sha256() {
     done
 }
 
-# Prevent the case module is set to be removed at install
+# Ensure module won't be removed during installation
 [ -f "$MODPATH/remove" ] && rm -f "$MODPATH/remove"
 
-# Define the path of root manager applet bin directories using find and set it to $PATH then export it
+# Add root manager binary paths to PATH if busybox is missing
 if ! command -v busybox >/dev/null 2>&1; then
     TOYS_PATH=$(find "/data/adb" -maxdepth 3 \( -name busybox -o -name ksu_susfs \) -exec dirname {} \; | sort -u | tr '\n' ':')
     export PATH="${PATH:+${PATH}:}${TOYS_PATH%:}"
 fi
 
-# Define the props path
+# Find and read all property files
 MODPROP_FILES=$(find_prop_files "$MODPATH/" 1)
 SYSPROP_FILES=$(find_prop_files "/" 2)
 
-# Store the content of all prop files in a variable
+# Load property file contents into variables
 MODPROP_CONTENT=$(echo "$MODPROP_FILES" | xargs cat)
 SYSPROP_CONTENT=$(echo "$SYSPROP_FILES" | xargs cat)
 
-# Module properties
+# Extract key module properties for display
 MODPROP_MODEL=$(grep_prop "ro.product.vendor.model" "$MODPROP_CONTENT")
 MODPROP_PRODUCT=$(grep_prop "ro.product.vendor.name" "$MODPROP_CONTENT" | tr '[:lower:]' '[:upper:]')
 MODPROP_VERSION=$(grep_prop "ro.build.version.release" "$MODPROP_CONTENT")
@@ -71,10 +71,10 @@ MODPROP_VERSIONCODE=$(date -d "$MODPROP_SECURITYPATCH" '+%y%m%d')
 MODPROP_MONTH=$(date -d "$MODPROP_SECURITYPATCH" '+%B')
 MODPROP_YEAR=$(date -d "$MODPROP_SECURITYPATCH" '+%Y')
 
-# System properties
+# Extract system SDK version for compatibility check
 SYSPROP_SDK=$(grep_prop "ro.build.version.sdk" "$SYSPROP_CONTENT")
 
-# Abort if is flashed within recovery
+# Prevent installation from recovery mode
 if ! $BOOTMODE; then
     ui_print "****************************************************"
     ui_print " ! Install from Recovery is NOT supported !"
@@ -83,7 +83,7 @@ if ! $BOOTMODE; then
     abort "****************************************************"
 fi
 
-# Warn the user about potential SDK failures
+# Warn about potential compatibility issues
 if [ "$SYSPROP_SDK" -lt "$MODPROP_SDK" ]; then
     ui_print "*************************************"
     ui_print " ! YOUR SYSTEM MIGHT SOFT-BRICK !"
@@ -93,20 +93,17 @@ if [ "$SYSPROP_SDK" -lt "$MODPROP_SDK" ]; then
     ui_print "*************************************"
 fi
 
-# Print head message
+# Display installation information
 ui_print "- Installing, $MODPROP_MODEL ($MODPROP_PRODUCT) [A$MODPROP_VERSION-SP$MODPROP_VERSIONCODE] - $MODPROP_MONTH $MODPROP_YEAR"
 
-# Checksum SHA256
+# Verify file integrity
 checksum_sha256
 
-# Running the gms_doze using busybox
-# [ -f "$MODPATH/gms_doze.sh" ] && busybox sh "$MODPATH"/gms_doze.sh 2>&1
-
-# Running the action early using busybox
+# Execute configuration scripts during installation
 [ -f "$MODPATH/action.sh" ] && busybox sh "$MODPATH"/action.sh 2>&1
 
-# Running the service early using busybox
+# Execute service script during installation
 [ -f "$MODPATH/service.sh" ] && busybox sh "$MODPATH"/service.sh 2>&1
 
-# Print footer message
+# Display completion message with credits
 ui_print "- Script by Tesla, Telegram: @T3SL4 | t.me/PixelProps"

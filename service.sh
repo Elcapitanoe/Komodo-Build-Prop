@@ -1,44 +1,45 @@
 #!/system/bin/busybox sh
 
+# Get the module path from script location
 MODPATH="${0%/*}"
 
-# If MODPATH is empty or is not default modules path, use current path
+# Fallback to current directory if MODPATH is invalid
 [ -z "$MODPATH" ] || ! echo "$MODPATH" | grep -q '/data/adb/modules/' &&
   MODPATH="$(dirname "$(readlink -f "$0")")"
 
-# Using util_functions.sh
+# Load utility functions or abort if missing
 [ -f "$MODPATH/util_functions.sh" ] && . "$MODPATH/util_functions.sh" || abort "! util_functions.sh not found!"
 
-# Wait for boot completion
+# Wait for system boot to complete
 while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 2; done
 
-# Wait for the device to decrypt (if it's encrypted) when phone is unlocked once.
+# Wait for device decryption after first unlock
 until [ -d "/sdcard/Android" ]; do sleep 3; done
 
-# Define module property config
+# Validate and set module property configuration paths
 for prop_file in "system.prop" "config.prop"; do
   prop_path="$MODPATH/$prop_file"
   prop_key_upper=$(echo "${prop_file%%.*}" | tr '[:lower:]' '[:upper:]')
 
-  # Check whether the file exists and is writable
+  # Ensure property files exist and are writable
   [ ! -f "$prop_path" ] || [ ! -w "$prop_path" ] && abort " ! $prop_file not found or not writable !"
 
-  # Set variable for the module property configs
+  # Create dynamic variable for property file paths
   eval "MODPATH_${prop_key_upper}_PROP=\$prop_path"
 done
 
-# Define the props path and content
+# Find and read all property files
 MODPROP_FILES=$(find_prop_files "$MODPATH/" 1)
 SYSPROP_FILES=$(find_prop_files "/" 3)
 MODPROP_CONTENT=$(echo "$MODPROP_FILES" | xargs cat)
 SYSPROP_CONTENT=$(echo "$SYSPROP_FILES" | xargs cat)
 
-# Property management functions
+# Generic property management function
 manage_prop() {
   local action=$1 prop_name=$2 mod_prop_val=$3 mod_prop_key=$4
   ui_print " - $prop_name=$mod_prop_val, ${action}ing property…"
 
-  # Construct the sed command dynamically using eval
+  # Build sed command for comment/uncomment operations
   local comment_cmd="s/^${mod_prop_key}/# ${mod_prop_key}/"
   local uncomment_cmd="s/^# ${mod_prop_key}/${mod_prop_key}/"
   eval "local sed_cmd=\$${action}_cmd"
@@ -47,24 +48,28 @@ manage_prop() {
     ui_print " ! Warning: Failed to $action property $mod_prop_key"
 }
 
+# Comment out a property in system.prop
 comment_prop() { manage_prop "comment" "$@"; }
+
+# Uncomment a property in system.prop
 uncomment_prop() { manage_prop "uncomment" "$@"; }
 
+# Check property values and update based on comparison
 check_and_update_prop() {
   local sys_prop_key=$1 mod_prop_key=$2 prop_name=$3 comparison=$4
 
-  # Get the system and module properties
+  # Extract property values from system and module
   sys_prop=$(grep_prop "$sys_prop_key" "$SYSPROP_CONTENT")
   mod_prop=$(grep_prop "$mod_prop_key" "$MODPROP_CONTENT")
 
-  # Check if the property exists within mod_prop
+  # Skip if module property is missing
   [ -z "$mod_prop" ] && {
     ui_print " - $prop_name is missing in either system or module props, skipping…"
     return
   }
 
   local result
-  # Perform comparisons based on the operand type
+  # Perform comparison based on specified operator
   case "$comparison" in
   eq) [ "$sys_prop" = "$mod_prop" ] && result=0 ;;
   ne) [ "$sys_prop" != "$mod_prop" ] && result=0 ;;
@@ -74,25 +79,28 @@ check_and_update_prop() {
   ge) [ "$sys_prop" -ge "$mod_prop" ] 2>/dev/null && result=0 ;;
   esac
 
-  # Patch properties based on given result
+  # Apply property changes based on comparison result
   [ "$result" = 0 ] &&
     comment_prop "$prop_name" "$mod_prop" "$mod_prop_key" ||
     uncomment_prop "$prop_name" "$mod_prop" "$mod_prop_key"
 }
 
-# Initialize config
+# Initialize sensitive property configuration
 init_config() {
   local prop_keys="device security_patch soc sdk props pihooks"
 
+  # Process each sensitive property configuration
   for prop_key in $prop_keys; do
     prop_val=$(grep_prop "pixelprops.sensitive.$prop_key" "$MODPROP_CONTENT")
     prop_key_upper=$(echo "$prop_key" | tr '[:lower:]' '[:upper:]')
     eval "SAFE_$prop_key_upper=\${prop_val:-true}"
 
+    # Prompt user for missing configuration values
     [ -z "$prop_val" ] && {
       ui_print " - Sensitive config property not found for $prop_key_upper, requesting user input…"
       volume_key_event_setval "SAFE_$prop_key_upper" true false "SAFE_$prop_key_upper"
 
+      # Save user choice to config file
       var_name="SAFE_$prop_key_upper"
       eval "prop_value=\$$var_name"
       echo "pixelprops.sensitive.$prop_key=$prop_value" >>"$MODPATH_CONFIG_PROP"
@@ -100,10 +108,11 @@ init_config() {
   done
 }
 
-# Check module sensitive properties
+# Apply sensitive property checks for module properties
 mod_sensitive_checks() {
   ui_print "- Running Sensitive MODPROP checks…"
 
+  # Define property check mappings
   function_map=$(
     cat <<EOF
 DEVICE:device:ne
@@ -113,12 +122,15 @@ SDK:sdk:lt
 EOF
   )
 
+  # Process each property check configuration
   echo "$function_map" | while IFS=: read -r safe_var prop_type comparison; do
     eval "local safe_val=\$SAFE_$safe_var"
 
+    # Skip checks if safe mode is disabled
     if ! boolval "$safe_val"; then
       ui_print " - Safe Mode was manually disabled for \"SAFE_$safe_var\" !"
     else
+      # Apply property checks based on type
       case "$prop_type" in
       device)
         check_and_update_prop "ro.product.product.device" "ro.product.device" "PRODUCT_DEVICE" "$comparison"
@@ -133,8 +145,10 @@ EOF
         check_and_update_prop "ro.soc.manufacturer" "ro.soc.manufacturer" "SOC_MANUFACTURER" "$comparison"
         ;;
       sdk)
+        # Check first API level
         check_and_update_prop "ro.product.first_api_level" "ro.product.first_api_level" "FIRST_API_LEVEL" "$comparison"
 
+        # Check all build version properties across partitions
         local prefixes="build product vendor vendor_dlkm system system_ext system_dlkm"
         local versions="sdk incremental release release_or_codename"
 
@@ -143,7 +157,7 @@ EOF
             prefix_upper=$(echo "$prefix" | tr '[:lower:]' '[:upper:]')
             version_upper=$(echo "$version" | tr '[:lower:]' '[:upper:]')
 
-            # Construct the property name
+            # Build property name based on prefix
             [ "$prefix" = "build" ] &&
               prop_name="ro.${prefix}.version.${version}" ||
               prop_name="ro.${prefix}.build.version.${version}"
@@ -157,17 +171,15 @@ EOF
   done
 }
 
-# Check system sensitive properties
+# Apply sensitive property checks for system properties
 sys_sensitive_checks() {
-  # Check if sensitive_props module exists
+  # Skip if sensitive_props module is already installed
   if [ -d "/data/adb/modules/sensitive_props" ]; then
     abort "Sensitive Props module is already present, Skipping !" false
   else
     ui_print "- Running Sensitive SYSPROP checks…"
 
-    ### Props ###
-
-    # Periodically hexpatch delete custom ROM props
+    # Continuously remove custom ROM properties in background
     while true; do
       hexpatch_deleteprop "LSPosed" \
         "marketname" "custom.device" "modversion" \
@@ -176,13 +188,12 @@ sys_sensitive_checks() {
         "morokernel" "noble" "optimus" "slimroms" "sultan" "aokp" "bharos" "calyxos" "calyxOS" "divestos" \
         "emteria.os" "grapheneos" "indus" "iodéos" "kali" "nethunter" "omnirom" "paranoid" "replicant" \
         "resurrection" "rising" "remix" "shift" "volla" "icosa" "kirisakura" "infinity" "Infinity"
-      # add more...
 
-      # Wait for 1 hour before the next check.
+      # Wait one hour before next cleanup cycle
       sleep 3600
     done &
 
-    # Fix display properties to remove custom ROM references
+    # Clean custom ROM references from display properties
     replace_value_resetprop ro.build.flavor "lineage_" ""
     replace_value_resetprop ro.build.flavor "userdebug" "user"
     replace_value_resetprop ro.build.display.id "lineage_" ""
@@ -191,100 +202,91 @@ sys_sensitive_checks() {
     replace_value_resetprop vendor.camera.aux.packagelist "lineageos." ""
     replace_value_resetprop ro.build.version.incremental "eng." ""
 
-    # Realme fingerprint fix
+    # Fix Realme device fingerprint verification
     check_resetprop ro.boot.flash.locked 1
     check_resetprop ro.boot.realme.lockstate 1
     check_resetprop ro.boot.realmebootstate green
 
-    # Oppo fingerprint fix
+    # Fix Oppo device fingerprint verification
     check_resetprop ro.boot.vbmeta.device_state locked
     check_resetprop vendor.boot.vbmeta.device_state locked
 
-    # OnePlus display/fingerprint fix
+    # Fix OnePlus device verification
     check_resetprop ro.is_ever_orange 0
     check_resetprop vendor.boot.verifiedbootstate green
 
-    # OnePlus/Oppo display fingerprint fix on OOS/ColorOS 12+
+    # Fix OnePlus/Oppo verification for newer firmware
     check_resetprop ro.boot.veritymode enforcing
     check_resetprop ro.boot.verifiedbootstate green
 
-    # Samsung warranty bit fix
+    # Fix Samsung warranty bit for verification
     for prop in ro.boot.warranty_bit ro.warranty_bit ro.vendor.boot.warranty_bit ro.vendor.warranty_bit; do
       check_resetprop "$prop" 0
     done
 
-    ### General adjustments ###
-
-    # Process prefixes for build properties
+    # Apply general build property fixes across all partitions
     for prefix in bootimage odm odm_dlkm oem product system system_ext vendor vendor_dlkm; do
       check_resetprop ro.${prefix}.build.type user
       check_resetprop ro.${prefix}.keys release-keys
       check_resetprop ro.${prefix}.build.tags release-keys
 
-      # Remove engineering ROM
+      # Clean engineering build references
       replace_value_resetprop ro.${prefix}.build.version.incremental "eng." ""
     done
 
-    # Maybe reset properties based on conditions (recovery boot mode)
+    # Reset recovery mode properties to normal values
     for prop in ro.bootmode ro.boot.bootmode ro.boot.mode vendor.bootmode vendor.boot.bootmode vendor.boot.mode; do
       maybe_resetprop "$prop" recovery unknown
     done
 
-    # MIUI cross-region flash adjustments
+    # Fix MIUI cross-region flash properties
     for prop in ro.boot.hwc ro.boot.hwcountry; do
       maybe_resetprop "$prop" CN GLOBAL
     done
 
-    # SafetyNet/banking app compatibility
+    # Set properties for banking app compatibility
     check_resetprop sys.oem_unlock_allowed 0
     check_resetprop ro.oem_unlock_supported 0
     check_resetprop net.tethering.noprovisioning true
 
-    # Init.rc adjustment
+    # Disable recovery service
     check_resetprop init.svc.flash_recovery stopped
 
-    # Fake encryption status
+    # Set encryption status for verification
     check_resetprop ro.crypto.state encrypted
 
-    # Secure boot and device lock settings
+    # Configure secure boot properties
     check_resetprop ro.secure 1
     check_resetprop ro.secureboot.devicelock 1
     check_resetprop ro.secureboot.lockstate locked
 
-    # Disable debugging and adb over network
+    # Disable debugging features for security
     check_resetprop ro.force.debuggable 0
     check_resetprop ro.debuggable 0
     check_resetprop ro.adb.secure 1
 
-    # Native Bridge (could break some features, appdome?)
-    # deleteprop ro.dalvik.vm.native.bridge
-
-    ### System Settings ###
-
-    # Fix Restrictions on non-SDK interface and disable developer options
-    for global_setting in hidden_api_policy hidden_api_policy_pre_p_apps hidden_api_policy_p_apps; do # adb_enabled development_settings_enabled tether_dun_required
+    # Remove hidden API policy restrictions
+    for global_setting in hidden_api_policy hidden_api_policy_pre_p_apps hidden_api_policy_p_apps; do
       settings delete global "$global_setting" >/dev/null 2>&1
     done
 
-    # Disable untrusted touches
+    # Configure touch security settings
     for namespace in global system secure; do
       settings put "$namespace" "block_untrusted_touches" 0 >/dev/null 2>&1
     done
 
-    ### File Permissions ###
-
-    # Hiding SELinux | Use toybox to protect *stat* access time reading
+    # Hide SELinux status by restricting file permissions
     [ -f /sys/fs/selinux/enforce ] && [ "$(toybox cat /sys/fs/selinux/enforce)" == "0" ] && {
       set_permissions /sys/fs/selinux/enforce 640
       set_permissions /sys/fs/selinux/policy 440
     }
 
-    # Find install-recovery.sh and set permissions
+    # Restrict recovery script permissions
     find /vendor/bin /system/bin -name install-recovery.sh | while read -r file; do
       set_permissions "$file" 440
     done
 
-    # Set permissions for other files/directories
+    # Restrict permissions on sensitive files and directories
     set_permissions /proc/cmdline 440
     set_permissions /proc/net/unix 440
     set_permissions /system/addon.d 750
@@ -292,26 +294,27 @@ sys_sensitive_checks() {
   fi
 }
 
+# Configure PIHooks properties for internal spoofing
 sys_sensitive_pihooks_checks() {
-  # Get initial Pihooks property names.
+  # Find existing PIHooks properties
   pihook_props=$(getprop | grep 'pihooks' | cut -d ':' -f 1 | tr -d '[]')
   PIF_MODULE_DIR="/data/adb/modules/playintegrityfix"
   use_pihooks=1
 
-  # Check if Pihooks poperties exist and PIF is not used.
+  # Disable PIHooks if PlayIntegrityFix is installed
   if [[ -d "$PIF_MODULE_DIR" ]] && [[ -s "$PIF_MODULE_DIR/module.prop" ]]; then
     use_pihooks=0
     ui_print "- PlayIntegrityFix module detected, Disabling PIHOOKS spoofing…"
   fi
 
-  # Check if Pihooks properties exist.
+  # Handle PIHooks configuration
   if [ -z "$pihook_props" ]; then
     ui_print "- No pihooks properties found (internal spoofing)"
     ui_print " ! Use PlayIntegrityFix instead ?"
   else
     ui_print "- Running Sensitive PIHOOKS checks (internal spoofing)…"
 
-    # Build properties
+    # Extract property values for PIHooks spoofing
     BRAND=$(grep_prop "ro.product.brand" "$MODPROP_CONTENT")
     MODEL=$(grep_prop "ro.product.model" "$MODPROP_CONTENT")
     DEVICE=$(grep_prop "ro.product.device" "$MODPROP_CONTENT")
@@ -326,20 +329,21 @@ sys_sensitive_pihooks_checks() {
     BUILD_TYPE=$(grep_prop "ro.product.build.type" "$MODPROP_CONTENT")
 
     update_ph_count=0
-    # Essential properties for integrity (PIF-less-PIF mode)
+    # Define essential properties for integrity verification
     essential_props="model manufacturer product fingerprint security_patch initial_sdk"
-    # Calculate the total number of essential props dynamically
+    
+    # Count total essential properties
     total_essential_props=$(echo "$essential_props" | wc -w)
 
-    # Set string values responsible for spoofing PropImitationHooks.
+    # Configure PIHooks string properties
     for prop in $pihook_props; do
       prop_value=$(getprop "$prop")
       prop_lower=$(echo "$prop" | tr '[:upper:]' '[:lower:]')
-      final_value="" # Disable by default
+      final_value=""
 
-      # Check if it's a boolean value using is_bool.
+      # Process non-boolean properties
       if ! is_bool "$prop_value"; then
-        # Check and apply the proper values
+        # Map property names to values
         case "$prop_lower" in
         *"brand"*) final_value="$BRAND" ;;
         *"model"*) final_value="$MODEL" ;;
@@ -354,52 +358,51 @@ sys_sensitive_pihooks_checks() {
         *"type"*) final_value="$BUILD_TYPE" ;;
         esac
 
-        # Check if this is one of the essential properties
+        # Track essential properties that are set
         for essential_prop in $essential_props; do
           if [[ "$prop_lower" == *"$essential_prop"* && -n "$final_value" ]]; then
             essential_props_set=$((essential_props_set + 1))
-            break # No need to check other essential props for this pihook prop
+            break
           fi
         done
 
-        # Reset the property
+        # Apply property value
         check_resetprop "$prop" "$final_value"
         ui_print " ? Property $prop set to \"$final_value\""
       fi
 
-      # If the value is not empty add to update_ph_count
+      # Count successful property updates
       [ -n "$final_value" ] && update_ph_count=$((update_ph_count + 1))
     done
 
-    # Warn the user if essential properties for PIF-less spoofing are not set
+    # Warn if essential properties are missing
     if [ "$essential_props_set" -lt "$total_essential_props" ]; then
       ui_print "***************************************"
       ui_print " ! Warning: Not all essential properties for PIF-less spoofing are set. This means that relying solely on PIHooks for spoofing might not be approriate. We recommend using PlayIntegrityFix instead, as it provides more comprehensive spoofing capabilities. As a result, relevant PIHooks features will be disabled."
       ui_print "***************************************"
     fi
 
-    # Set boolean values responsible for enabling or disabling the feature.
+    # Configure PIHooks boolean properties
     for prop in $pihook_props; do
       prop_value=$(getprop "$prop")
       prop_lower=$(echo "$prop" | tr '[:upper:]' '[:lower:]')
-      final_value="0" # Disable by default
+      final_value="0"
 
-      # Check if it's a boolean value using is_bool.
+      # Process boolean properties
       if is_bool "$prop_value"; then
-        # Use essential_props_set to determine if spoofing is likely successful
+        # Enable if all essential properties are set
         boolval "$use_pihooks" && [ "$essential_props_set" -ge "$total_essential_props" ] && final_value="1"
 
-        # If the prop contains "disable" revert the disabled state, from false to true.
-        # Don't revert the check if prop name contains checks irrelevent to integrity.
+        # Handle disable properties with inverted logic
         if [[ "$prop_lower" == *"disable"* ]] &&
           [[ ! "$prop_lower" == *"game"* ]] &&
           [[ ! "$prop_lower" == *"photo"* ]] &&
           [[ ! "$prop_lower" == *"netflix"* ]]; then
-          final_value="1" # Disable by default
+          final_value="1"
           boolval "$use_pihooks" && [ "$essential_props_set" -ge "$total_essential_props" ] && final_value="0"
         fi
 
-        # Reset the property
+        # Apply boolean property value
         check_resetprop "$prop" "$final_value"
         ui_print " ? Property $prop set to \"$final_value\" ($(boolval "$final_value" && echo enabled || echo disabled))"
       fi
@@ -407,7 +410,7 @@ sys_sensitive_pihooks_checks() {
   fi
 }
 
-# Main execution
+# Execute all configuration and checks
 init_config
 mod_sensitive_checks
 boolval "$SAFE_PROPS" && sys_sensitive_checks

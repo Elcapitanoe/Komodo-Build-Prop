@@ -1,8 +1,8 @@
 <div align="center">
-<img src="https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total?style=flat-square&color=7490ac" alt="Total downloads">
-<img src="https://img.shields.io/github/v/release/Elcapitanoe/Komodo-Build-Prop?style=flat-square&color=7490ac" alt="Latest release version">
-<img src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop/main?style=flat-square&color=7490ac" alt="Last commit">
-<img src="https://img.shields.io/github/languages/top/Elcapitanoe/Komodo-Build-Prop?style=flat-square&color=7490ac" alt="Top language">
+<img src="https://img.shields.io/github/downloads/Elcapitanoe/Komodo-Build-Prop/total?style=flat-square&color=7490ac&label=Total%20Download" alt="Total downloads">
+<img src="https://img.shields.io/github/v/release/Elcapitanoe/Komodo-Build-Prop?style=flat-square&color=7490ac&label=Latest%20Version" alt="Latest release version">
+<img src="https://img.shields.io/github/release-date/Elcapitanoe/Komodo-Build-Prop?style=flat-square&color=7490ac&label=Last%20Release&display_date=published_at" alt="Last release date">
+<img src="https://img.shields.io/github/last-commit/Elcapitanoe/Komodo-Build-Prop/main?style=flat-square&color=7490ac&label=Last%20Commit" alt="Last commit">
 </div>
 
 <hr />

@@ -1,3 +1,6 @@
+## Jul 18, 2025
+Synced props with the latest beta build `Beta_BP31.250610.004`
+
 ## Jul 8, 2025
 Synced props with the latest beta build `beta_BP31.250523.010` and shifted development focus to `Komodo_Beta` Build Props.
 

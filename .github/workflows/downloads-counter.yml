@@ -17,29 +17,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install urlwatch
-        run: |
-          pip install --upgrade urlwatch
+        run: pip install --upgrade urlwatch
 
-      - name: Write config & jobs
+      - name: Write urlwatch config
         run: |
           mkdir -p ~/.config/urlwatch
+          echo "report:" > ~/.config/urlwatch/urlwatch.yaml
+          echo "  telegram:" >> ~/.config/urlwatch/urlwatch.yaml
+          echo "    enabled: true" >> ~/.config/urlwatch/urlwatch.yaml
+          echo "    bot_token: \"$TELEGRAM_BOT_TOKEN\"" >> ~/.config/urlwatch/urlwatch.yaml
+          echo "    chat_id: \"$TELEGRAM_CHAT_ID\"" >> ~/.config/urlwatch/urlwatch.yaml
 
-          cat <<EOF > ~/.config/urlwatch/urlwatch.yaml
-report:
-  telegram:
-    enabled: true
-    bot_token: "${TELEGRAM_BOT_TOKEN}"
-    chat_id: "${TELEGRAM_CHAT_ID}"
-EOF
-
-          cat <<EOF > ~/.config/urlwatch/urls.yaml
-- name: Check downloads count
-  url: https://prop.domiadi.com
-  filter:
-    - css: div.text-sm.opacity-90
-    - html2text
-    - re: ([0-9]+) downloads
-EOF
+      - name: Write urlwatch job
+        run: |
+          echo "- name: Check downloads count" > ~/.config/urlwatch/urls.yaml
+          echo "  url: https://prop.domiadi.com" >> ~/.config/urlwatch/urls.yaml
+          echo "  filter:" >> ~/.config/urlwatch/urls.yaml
+          echo "    - css: div.text-sm.opacity-90" >> ~/.config/urlwatch/urls.yaml
+          echo "    - html2text" >> ~/.config/urlwatch/urls.yaml
+          echo "    - re: ([0-9]+) downloads" >> ~/.config/urlwatch/urls.yaml
 
       - name: Run urlwatch
         run: ~/.local/bin/urlwatch || echo "No changes"

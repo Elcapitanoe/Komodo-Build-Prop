@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: check
-        uses: nilp0inter/urlwatch-action@v1
+        uses: nilp0inter/urlwatch-action@v0.1.0
         with:
           urls: |
             - name: Android16 OTA info

@@ -16,39 +16,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install urlwatch
         run: |
-          pip install --upgrade urlwatch requests
+          pip install --upgrade urlwatch
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Write urlwatch config
+      - name: Write config & jobs
         run: |
           mkdir -p ~/.config/urlwatch
-          echo "report:" > ~/.config/urlwatch/urlwatch.yaml
-          echo "  telegram:" >> ~/.config/urlwatch/urlwatch.yaml
-          echo "    enabled: true" >> ~/.config/urlwatch/urlwatch.yaml
-          echo "    bot_token: \"$TELEGRAM_BOT_TOKEN\"" >> ~/.config/urlwatch/urlwatch.yaml
-          echo "    chat_id: \"$TELEGRAM_CHAT_ID\"" >> ~/.config/urlwatch/urlwatch.yaml
+          cat <<EOF > ~/.config/urlwatch/urlwatch.yaml
+report:
+  telegram:
+    enabled: true
+    bot_token: "${TELEGRAM_BOT_TOKEN}"
+    chat_id: "${TELEGRAM_CHAT_ID}"
+EOF
 
-      - name: Write urlwatch job
-        run: |
-          echo "- name: Check downloads count" > ~/.config/urlwatch/urls.yaml
-          echo "  url: https://prop.domiadi.com" >> ~/.config/urlwatch/urls.yaml
-          echo "  filter:" >> ~/.config/urlwatch/urls.yaml
-          echo "    - css: div.text-sm.opacity-90" >> ~/.config/urlwatch/urls.yaml
-          echo "    - html2text" >> ~/.config/urlwatch/urls.yaml
-          echo "    - re: ([0-9]+) downloads" >> ~/.config/urlwatch/urls.yaml
+          cat <<EOF > ~/.config/urlwatch/urls.yaml
+- name: Check downloads count
+  url: https://prop.domiadi.com
+  filter:
+    - css: div.text-sm.opacity-90
+    - html2text
+    - re: ([0-9]+) downloads
+EOF
 
-      - name: Run urlwatch
-        id: urlwatch
+      - name: Run urlwatch (with fallback Telegram message)
         run: |
-          ~/.local/bin/urlwatch > result.log || echo "No changes"
-          cat result.log
-
-      - name: Send Telegram message if no change
-        if: always()
-        run: |
-          if grep -q "No changes detected" result.log; then
+          urlwatch > output.txt || true
+          if grep -q "NEW:\|CHANGED:" output.txt; then
+            cat output.txt
+          else
             curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
-              -d chat_id=${TELEGRAM_CHAT_ID} \
-              -d text="No updates detected on the downloads count page. Everything remains the same ✅"
+              -d chat_id="${TELEGRAM_CHAT_ID}" \
+              -d text="ℹ️ No change in download count detected on prop.domiadi.com"
           fi

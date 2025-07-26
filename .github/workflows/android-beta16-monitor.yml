@@ -25,7 +25,7 @@ jobs:
             - name: Android16 OTA info
               url: https://developer.android.com/about/versions/16/download-ota
               filter:
-                - css: "table.responsive.fixed tbody"
+                - css: table.responsive.fixed tbody
           token: ${{ secrets.GITHUB_TOKEN }}
       - if: always()
         run: |

@@ -1,47 +1,44 @@
-name: Android16 OTA Monitor
+name: OTA Release Monitor
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-android16-monitor
-  cancel-in-progress: true
-
-env:
-  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  schedule:
+    - cron: '0 * * * *'
 
 jobs:
-  monitor:
+  monitor-ota:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - id: check
-        uses: nilp0inter/urlwatch-action@v0.1.0
-        with:
-          urls: |
-            - name: Android16 OTA info
-              url: https://developer.android.com/about/versions/16/download-ota
-              filter:
-                - css: table.responsive.fixed tbody
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - if: always()
-        run: |
-          echo "=== Changes ==="
-          echo "${{ steps.check.outputs.changes }}"
-          echo "=== Report ==="
-          echo "${{ steps.check.outputs.report }}"
-      - if: steps.check.outputs.changes != ''
-        uses: appleboy/telegram-action@master
-        with:
-          token: ${{ env.TELEGRAM_BOT_TOKEN }}
-          to: ${{ env.TELEGRAM_CHAT_ID }}
-          message: |
-            🚨 OTA info changed  
-            Android16 OTA page: https://developer.android.com/about/versions/16/download-ota
 
-            Details:
-            ${{ steps.check.outputs.report }}
-          parse-mode: markdown
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: pip install urlwatch
+
+      - run: |
+          mkdir -p ~/.config/urlwatch ~/.cache/urlwatch
+
+          cat <<EOF > ~/.config/urlwatch/urls.yaml
+          - name: Android 16 OTA
+            kind: url
+            url: https://developer.android.com/about/versions/16/download-ota
+            filter:
+              - css: tbody
+          EOF
+
+          cat <<EOF > ~/.config/urlwatch/config.yaml
+          report:
+            text:
+              enabled: true
+            telegram:
+              enabled: true
+              bot_token: "${TELEGRAM_BOT_TOKEN}"
+              chat_id: "${TELEGRAM_CHAT_ID}"
+          EOF
+
+      - run: |
+          echo "Run: $(date '+%Y-%m-%d %H:%M:%S')"
+          ~/.local/bin/urlwatch || echo "No changes detected"

@@ -1,8 +1,9 @@
-name: Android 16 OTA Monitor
+name: Android  16 OTA Monitor
 
 on:
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-android16-monitor
@@ -30,7 +31,7 @@ jobs:
                 - css: "table.responsive.fixed tbody"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log urlwatch outputs
+      - name: Log outputs
         if: always()
         run: |
           echo "=== Changes ==="

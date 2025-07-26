@@ -16,8 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install urlwatch
-        run: pip install --upgrade urlwatch
+      - name: Install dependencies
+        run: |
+          pip install --upgrade urlwatch requests
 
       - name: Write urlwatch config
         run: |
@@ -38,4 +39,16 @@ jobs:
           echo "    - re: ([0-9]+) downloads" >> ~/.config/urlwatch/urls.yaml
 
       - name: Run urlwatch
-        run: ~/.local/bin/urlwatch || echo "No changes"
+        id: urlwatch
+        run: |
+          ~/.local/bin/urlwatch > result.log || echo "No changes"
+          cat result.log
+
+      - name: Send Telegram message if no change
+        if: always()
+        run: |
+          if grep -q "No changes detected" result.log; then
+            curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage \
+              -d chat_id=${TELEGRAM_CHAT_ID} \
+              -d text="No updates detected on the downloads count page. Everything remains the same ✅"
+          fi

@@ -1,0 +1,48 @@
+name: Monitor Downloads
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_2 }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Set Timezone
+        run: sudo timedatectl set-timezone Asia/Jakarta
+
+      - name: Show Start Time
+        run: echo "Run at: $(date '+%Y-%m-%d %H:%M:%S')"
+
+      - name: Install urlwatch
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install urlwatch
+
+      - name: Setup urlwatch config
+        run: |
+          mkdir -p ~/.config/urlwatch
+          cat <<EOF > ~/.config/urlwatch/urls.yaml
+- name: Domi Prop Downloads
+  url: https://prop.domiadi.com
+  filter:
+    - css: "div.text-sm.opacity-90"
+    - html2text
+    - grep: "downloads"
+EOF
+
+          cat <<EOF > ~/.config/urlwatch/urlwatch.yaml
+report:
+  telegram:
+    bot_token: "$TELEGRAM_BOT_TOKEN"
+    chat_id: "$TELEGRAM_CHAT_ID"
+EOF
+
+      - name: Run urlwatch
+        run: |
+          ~/.local/bin/urlwatch || echo "No changes detected"

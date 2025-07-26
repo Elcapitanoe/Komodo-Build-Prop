@@ -1,0 +1,53 @@
+name: Android 16 OTA Monitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-android16-monitor
+  cancel-in-progress: true
+
+env:
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Detect OTA table changes
+        id: check
+        uses: nilp0inter/urlwatch-action@v1
+        with:
+          urls: |
+            - name: Android16 OTA table
+              url: https://developer.android.com/about/versions/16/download-ota
+              filter:
+                - css: "table.responsive.fixed tbody"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log urlwatch outputs
+        if: always()
+        run: |
+          echo "=== Changes ==="
+          echo "${{ steps.check.outputs.changes }}"
+          echo "=== Report ==="
+          echo "${{ steps.check.outputs.report }}"
+
+      - name: Send Telegram notification on change
+        if: steps.check.outputs.changes != ''
+        uses: appleboy/telegram-action@master
+        with:
+          token: ${{ env.TELEGRAM_BOT_TOKEN }}
+          to: ${{ env.TELEGRAM_CHAT_ID }}
+          message: |
+            🚨 OTA Table changed  
+            Android16 OTA page: https://developer.android.com/about/versions/16/download-ota
+
+            Changes:
+            ${{ steps.check.outputs.report }}
+          parse-mode: markdown

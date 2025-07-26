@@ -21,7 +21,7 @@ jobs:
           pip install --upgrade urlwatch
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Write config & jobs
+      - name: Write urlwatch.yaml
         run: |
           mkdir -p ~/.config/urlwatch
           cat <<EOF > ~/.config/urlwatch/urlwatch.yaml
@@ -32,6 +32,8 @@ report:
     chat_id: "${TELEGRAM_CHAT_ID}"
 EOF
 
+      - name: Write urls.yaml
+        run: |
           cat <<EOF > ~/.config/urlwatch/urls.yaml
 - name: Check downloads count
   url: https://prop.domiadi.com

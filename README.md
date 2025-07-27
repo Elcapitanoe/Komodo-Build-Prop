@@ -37,7 +37,12 @@ If your device fails to boot after installation:
 - Use this at your own risk, it may lead to data loss or system instability.  
 - **Strongly recommended to perform a full backup** before proceeding.
 
+## How It Works
+
+The `props` modules in this repository are generated using the configuration logic provided by @0x11DFE.
+To ensure full transparency, the original source code has been added to this repository as a Git submodule under the folder `source-code`.
+
 ## Credits & Support
 
-- **Configuration by** [@0x11DFE](https://github.com/0x11DFE)
+- **Configuration Logic by** [@0x11DFE](https://github.com/0x11DFE)
 - Issues, bugs, and feature requests: please open them on the repository’s [Issues](https://github.com/Elcapitanoe/Komodo-Build-Prop/issues) page.

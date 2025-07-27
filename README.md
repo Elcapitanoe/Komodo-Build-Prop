@@ -39,7 +39,7 @@ If your device fails to boot after installation:
 
 ## How It Works
 
-The `props` modules in this repository are generated using the configuration logic provided by @0x11DFE.
+The `props` modules in this repository are generated using the configuration logic provided by [@0x11DFE](https://github.com/0x11DFE) 
 To ensure full transparency, the original source code has been added to this repository as a Git submodule under the folder `source-code`.
 
 ## Credits & Support

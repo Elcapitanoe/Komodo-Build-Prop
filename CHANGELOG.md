@@ -1,20 +1,24 @@
-## Jul 18, 2025
-Synced props with the latest beta build `Beta_BP31.250610.004`
+## [2025-07-18]
+- Aligned system properties with upstream beta release `Beta_BP31.250610.004`.
 
-## Jul 8, 2025
-Synced props with the latest beta build `beta_BP31.250523.010` and shifted development focus to `Komodo_Beta` Build Props.
+## [2025-07-08]
+- Synchronized props with beta release `beta_BP31.250523.010`.
+- Transitioned active development to `Komodo_Beta` configuration set.
 
-## Jul 1, 2025
-Updated sysconfig for association rules and power/data‑saving exceptions, and synchronized props with build `BP11.241210.004`.
+## [2025-07-01]
+- Updated `sysconfig` to reflect revised association rules and exceptions for power/data-saving modes.
+- Synchronized property set with base build `BP11.241210.004`.
 
-## Jun 21, 2025
-Removed boot animation files from the module.
+## [2025-06-21]
+- Removed bundled boot animation assets to reduce module size and improve modularity.
 
-## Mar 6, 2025
-Integrated Google Pixel boot animation, optimized system flags, and updated all build identifiers in `system.prop` and `module.prop`.
+## [2025-03-06]
+- Integrated official Google Pixel boot animation.
+- Refined system flags for compatibility and performance.
+- Updated `system.prop` and `module.prop` with accurate build metadata.
 
-## Mar 5, 2025
-Fixed multiple installation errors.
+## [2025-03-05]
+- Resolved multiple issues affecting installation reliability.
 
-## Nov 21, 2024
-Initial release.
+## [2024-11-21]
+- Initial module release with baseline configuration and system properties.

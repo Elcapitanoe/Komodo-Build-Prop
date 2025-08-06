@@ -18,7 +18,7 @@
 
 ## Installation
 
-1. Download the latest `.zip` from the [Releases](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases) page.  
+1. Download the latest `.zip` from the [Github Releases](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases) or [Website](https://prop.domiadi.com) 
 2. Transfer the file to your Android device.  
 3. Open Magisk or KernelSU → **Install from storage** → select `Komodo_XXXXXX.zip`.  
 4. Use volume (Volume Up = Yes, Volume Down = No, Power = Cancel).  
@@ -36,11 +36,6 @@ If your device fails to boot after installation:
 
 - Use this at your own risk, it may lead to data loss or system instability.  
 - **Strongly recommended to perform a full backup** before proceeding.
-
-## How It Works
-
-The `props` modules in this repository are generated using the configuration logic provided by [@0x11DFE](https://github.com/0x11DFE) 
-To ensure full transparency, the original source code has been added to this repository as a Git submodule under the folder `source-code`.
 
 ## Credits & Support
 

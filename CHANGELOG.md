@@ -1,3 +1,6 @@
+## [2026-01-10]
+- Synchronized props with QPR2 beta release `QPR2 16 BP41.250916.015.A1`.
+
 ## [2025-07-18]
 - Aligned system properties with upstream beta release `Beta_BP31.250610.004`.
 

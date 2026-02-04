@@ -1,3 +1,6 @@
+## [26-02-02]
+- Synchronized props with QPR3 beta release `QPR3 16 CP11.251209.007.A1`.
+
 ## [2026-01-10]
 - Synchronized props with QPR2 beta release `QPR2 16 BP41.250916.015.A1`.
 

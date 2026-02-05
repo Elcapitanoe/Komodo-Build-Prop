@@ -1,0 +1,40 @@
+name: OTA Release Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  monitor-ota:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' 
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Execute Monitor Logic
+        id: run_monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python ota_monitor.py
+
+      - name: Persist State (Git Commit)
+        if: steps.run_monitor.outputs.updated == 'true'
+        run: |
+          git config --global user.name "OTA Monitor Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+          git add ota_state.json
+          git commit -m "audit: update OTA state registry [skip ci]"
+          git push

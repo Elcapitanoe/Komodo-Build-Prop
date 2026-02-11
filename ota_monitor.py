@@ -8,7 +8,7 @@ import datetime
 TARGET_URL = "https://developer.android.com/about/versions/16/qpr3/download-ota"
 DEVICE_CODENAME = "komodo" 
 STATE_FILE = "ota_state.json"
-USER_AGENT = "Mozilla/5.0 (compatible; AndroidOTAMonitor/1.0; +https://github.com/your-username/repo)"
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36""
 
 def log(level, message):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

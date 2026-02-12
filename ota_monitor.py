@@ -33,7 +33,7 @@ def send_telegram(message):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown",
+        "parse_mode": "HTML",
         "disable_web_page_preview": True
     }
 
@@ -82,11 +82,14 @@ def load_previous_state():
 def main():
     target_devices = get_target_devices()
     all_found_links = fetch_all_links()
+    
     state = load_previous_state()
     updates_detected = False
-    notification_buffer = []
-    log("INFO", f"Starting scan for devices: {target_devices}")
     
+    notification_buffer = []
+
+    log("INFO", f"Starting scan for devices: {target_devices}")
+
     for device in target_devices:
         current_device_links = filter_links_for_device(all_found_links, device)
         old_device_links = state.get(device, [])
@@ -96,21 +99,26 @@ def main():
             count = len(new_links)
             updates_detected = True
             log("INFO", f"[{device}] Found {count} new update(s).")
+            
             state[device] = current_device_links
-            notification_buffer.append(f"\n*Device: {device.capitalize()}* ({count} updates)")
+            
+            notification_buffer.append(f"\n<b>Device: {device.capitalize()}</b> ({count} updates)")
             for link in new_links:
                 filename = link.split('/')[-1]
-                notification_buffer.append(f"File: `{filename}`")
+                notification_buffer.append(f"File: <code>{filename}</code>")
                 notification_buffer.append(f"Link: {link}")
         else:
             state[device] = current_device_links
-            
+
     if updates_detected:
-        header = "*System Notification: Multi-Device OTA Update Report*\n"
+        header = "<b>System Notification: Multi-Device OTA Update Report</b>\n"
         full_message = header + "\n".join(notification_buffer)
+        
         send_telegram(full_message)
+        
         with open(STATE_FILE, "w") as f:
             json.dump(state, f, indent=2)
+            
         with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
             print("updated=true", file=fh)
     else:

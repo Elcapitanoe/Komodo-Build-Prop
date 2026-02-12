@@ -1,3 +1,5 @@
-[
-  "https://dl.google.com/developers/android/baklava/images/ota/komodo_beta-ota-cp11.251209.009.a1-98142714.zip"
-]
+{
+  "komodo": [
+    "https://dl.google.com/developers/android/baklava/images/ota/komodo_beta-ota-cp11.251209.009.a1-98142714.zip"
+  ]
+}

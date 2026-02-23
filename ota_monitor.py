@@ -5,10 +5,10 @@ import os
 import sys
 import datetime
 
-TARGET_URL = "https://developer.android.com/about/versions/16/qpr3/download-ota"
+TARGET_URL = "https://developer.android.com/about/versions/17/download-ota"
 DEVICE_CONFIG_RAW = "komodo" 
 STATE_FILE = "ota_state.json"
-USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
 
 def log(level, message):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

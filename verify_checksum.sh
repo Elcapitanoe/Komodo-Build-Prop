@@ -22,13 +22,8 @@ if [[ -z "${TARGET_FILE}" ]] || [[ -z "${CHECKSUM_SOURCE}" ]]; then
     exit "${EXIT_INVALID_ARGS}"
 fi
 
-if [[ ! -f "${TARGET_FILE}" ]]; then
-    log_error "Target file not found: ${TARGET_FILE}"
-    exit "${EXIT_IO_ERROR}"
-fi
-
-if [[ ! -f "${CHECKSUM_SOURCE}" ]]; then
-    log_error "Checksum source file not found: ${CHECKSUM_SOURCE}"
+if [[ ! -f "${TARGET_FILE}" ]] || [[ ! -f "${CHECKSUM_SOURCE}" ]]; then
+    log_error "Target file or checksum source not found."
     exit "${EXIT_IO_ERROR}"
 fi
 
@@ -46,7 +41,7 @@ if [[ ! "${EXPECTED_HASH}" =~ ^[a-f0-9]{64}$ ]]; then
 fi
 
 if [[ "${EXPECTED_HASH}" != "${ACTUAL_HASH}" ]]; then
-    log_error "Verification Failed!"
+    log_error "Verification Failed for ${TARGET_FILE}!"
     printf "Expected: %s\nActual:   %s\n" "${EXPECTED_HASH}" "${ACTUAL_HASH}" >&2
     exit "${EXIT_HASH_MISMATCH}"
 fi

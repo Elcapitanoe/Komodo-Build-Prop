@@ -1,3 +1,6 @@
+## [2026-04-02]
+- Synchronized system properties with Android 17 Beta release (`CP21.260306.017`).
+
 ## [2026-02-02]
 - Synchronized system properties with Android 16 QPR3 Beta release (`CP11.251209.007.A1`).
 

@@ -21,7 +21,7 @@ Before flashing, ensure your environment meets the following criteria:
 
 ## Installation Guide
 
-1.  **Download:** Grab the latest `.zip` from [GitHub Releases](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases) or the [Official Website](https://prop.domiadi.com).
+1.  **Download:** Grab the latest `.zip` from [GitHub Releases](https://github.com/Elcapitanoe/Komodo-Build-Prop/releases) or the [Official Website](https://pixelprop.pages.dev).
 2.  **Flash:** Open your root manager (Magisk/KernelSU), navigate to **Modules**, and select **Install from storage**.
 3.  **Configure:** The installer script uses hardware keys for selection:
     -   `Volume Up (+)` : **Confirm / Yes**

@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      commit_sha: ${{ steps.commit_step.outputs.commit_sha }}
 
     steps:
       - name: Checkout Repository
@@ -33,6 +35,7 @@ jobs:
           git submodule update --init --remote --recursive
 
       - name: Commit & Push Submodule Pointer
+        id: commit_step
         if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' }}
         run: |
           if [ -n "$(git status --porcelain source-code)" ]; then
@@ -42,8 +45,10 @@ jobs:
             git add source-code
             git commit -m "chore: sync source-code submodule pointer [skip ci]"
             git push origin main
+            echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           else
             echo "No submodule updates found. Skipping commit."
+            echo "commit_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
   prepare-build:
@@ -63,16 +68,24 @@ jobs:
           echo "tag_name=$(date '+%Y%m%d')" >> $GITHUB_OUTPUT
           echo "friendly_tag_name=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
+      - name: Create or Get GitHub Release
         id: create_release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
-          release_name: ${{ steps.get_tag_name.outputs.friendly_tag_name }}
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.get_tag_name.outputs.tag_name }}"
+          TITLE="${{ steps.get_tag_name.outputs.friendly_tag_name }}"
+
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "$TITLE" --notes "Automated release for $TITLE"
+          fi
+
+          RELEASE_ID=$(gh release view "$TAG" --json id -q .id)
+          UPLOAD_URL="https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets{?name,label}"
+
+          echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
+          echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
   build-matrix:
     name: Determine Build Targets
@@ -102,14 +115,9 @@ jobs:
       - name: Checkout Repository with Submodules
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ needs.sync-submodule.outputs.commit_sha || 'main' }}
           submodules: recursive
           fetch-depth: 0
-
-      - name: Ensure Submodules Updated
-        run: |
-          git pull origin main
-          git submodule update --init --recursive
 
       - name: Install APT Dependencies
         run: |
@@ -170,14 +178,12 @@ jobs:
           echo "BUILD_EXISTS=$BUILD_EXISTS" >> $GITHUB_OUTPUT
 
       - name: Upload Module Asset to GitHub Release
-        uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare-build.outputs.upload_url }}
-          asset_path: ./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip
-          asset_name: ${{ steps.extract_and_build.outputs.module_base_name }}.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.prepare-build.outputs.tag_name }}"
+          ASSET_PATH="./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip"
+          gh release upload "$TAG" "$ASSET_PATH" --clobber
         if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
 
       - name: Update Release Notes Information

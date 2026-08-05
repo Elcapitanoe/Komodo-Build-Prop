@@ -33,21 +33,25 @@ jobs:
       - name: Update Submodule to Latest Remote Commit
         run: |
           git submodule update --init --remote --recursive
+          cd source-code
+          git fetch origin
+          git checkout origin/main
+          cd ..
 
       - name: Commit & Push Submodule Pointer
         id: commit_step
         if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' }}
         run: |
-          if [ -n "$(git status --porcelain source-code)" ]; then
-            echo "Submodule changes detected. Committing and pushing pointer..."
+          git add source-code
+          if ! git diff --cached --quiet; then
+            echo "Submodule pointer changes detected. Committing and pushing..."
             git config --global user.name "github-actions[bot]"
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add source-code
             git commit -m "chore: sync source-code submodule pointer [skip ci]"
             git push origin main
             echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           else
-            echo "No submodule updates found. Skipping commit."
+            echo "No submodule pointer updates found. Skipping commit."
             echo "commit_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 

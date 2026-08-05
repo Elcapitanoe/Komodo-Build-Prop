@@ -63,7 +63,6 @@ jobs:
       contents: write
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      id: ${{ steps.create_release.outputs.id }}
       tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
     steps:
       - name: Checkout Repository
@@ -88,11 +87,6 @@ jobs:
             gh release create "$TAG" -R "$REPO" --title "$TITLE" --notes "Automated release for $TITLE"
           fi
 
-          RELEASE_ID=$(gh release view "$TAG" -R "$REPO" --json id -q .id)
-          UPLOAD_URL="https://uploads.github.com/repos/${REPO}/releases/${RELEASE_ID}/assets{?name,label}"
-
-          echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
-          echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
   build-matrix:
@@ -197,18 +191,27 @@ jobs:
         if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
 
       - name: Update Release Notes Information
-        uses: irongut/EditRelease@v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ needs.prepare-build.outputs.id }}
-          replacebody: false
-          body: |
-            ## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
-            #### Module
-            - File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
-            - File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
-            #### Firmware
-            - Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.prepare-build.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+
+          BODY_NOTES=$(cat <<'EOF'
+
+  ## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
+  #### Module
+  - File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
+  - File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
+  #### Firmware
+  - Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
+  EOF
+          )
+
+          EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body || echo "")
+          NEW_BODY="${EXISTING_BODY}${BODY_NOTES}"
+
+          gh release edit "$TAG" -R "$REPO" --notes "$NEW_BODY"
         if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
 
       - name: Send Built Module to Telegram

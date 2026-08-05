@@ -12,7 +12,7 @@ on:
         type: boolean
         default: true
   schedule:
-    - cron: '0 12 * * *' # Trigger daily at 12:00 UTC
+    - cron: '0 12 15 * *' # Trigger monthly on the 15th at 12:00 UTC
 
 jobs:
   sync-submodule:

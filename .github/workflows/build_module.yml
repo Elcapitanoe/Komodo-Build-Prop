@@ -42,7 +42,7 @@ jobs:
 
       - name: Commit & Push Submodule Pointer
         id: commit_step
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' || github.event.inputs.commit_submodule == true }}
+        if: github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' || github.event.inputs.commit_submodule == true
         run: |
           git add source-code
           if ! git diff --cached --quiet; then
@@ -91,27 +91,15 @@ jobs:
 
           echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
-  build-matrix:
-    name: Determine Build Targets
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set_matrix.outputs.matrix }}
-    steps:
-      - name: Calculate Matrix Target
-        id: set_matrix
-        run: |
-          INPUT_DEVICE="${{ github.event.inputs.device_name }}"
-          TARGET_DEVICE="${INPUT_DEVICE:-komodo_beta17q2}"
-          echo "matrix={\"device_name\":[\"$TARGET_DEVICE\"]}" >> $GITHUB_OUTPUT
-
   build:
     name: Build & Release Module
-    needs: [sync-submodule, prepare-build, build-matrix]
+    needs: [sync-submodule, prepare-build]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     strategy:
-      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+      matrix:
+        device_name: [ "${{ github.event.inputs.device_name || 'komodo_beta17q2' }}" ]
       fail-fast: false
 
     steps:
@@ -197,19 +185,15 @@ jobs:
         run: |
           TAG="${{ needs.prepare-build.outputs.tag_name }}"
           REPO="${{ github.repository }}"
+          DEV_NAME="${{ steps.extract_and_build.outputs.device_name }}"
+          DEV_CODE="${{ steps.extract_and_build.outputs.device_codename }}"
+          FILE_NAME="${{ steps.extract_and_build.outputs.module_base_name }}.zip"
+          FILE_HASH="${{ steps.extract_and_build.outputs.module_hash }}"
+          BUILD_DESC="${{ steps.extract_and_build.outputs.device_build_description }}"
 
-          BODY_NOTES=$(cat <<'EOF'
+          BODY_NOTES=$(printf "\n\n## %s (%s)\n#### Module\n- File name: \`%s\`\n- File hash (SHA256): \`%s\`\n#### Firmware\n- Build Description: \`%s\`\n" "$DEV_NAME" "$DEV_CODE" "$FILE_NAME" "$FILE_HASH" "$BUILD_DESC")
 
-## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
-#### Module
-- File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
-- File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
-#### Firmware
-- Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
-EOF
-          )
-
-          EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body || echo "")
+          EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body 2>/dev/null || echo "")
           NEW_BODY="${EXISTING_BODY}${BODY_NOTES}"
 
           gh release edit "$TAG" -R "$REPO" --notes "$NEW_BODY"

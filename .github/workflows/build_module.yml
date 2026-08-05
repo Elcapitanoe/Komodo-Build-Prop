@@ -1,4 +1,4 @@
-name: Build & Release Magisk Module
+name: Build Module
 
 on:
   workflow_dispatch:

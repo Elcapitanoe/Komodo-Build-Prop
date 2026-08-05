@@ -95,7 +95,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        device_name: ${{ JSON(needs.build-matrix.outputs.matrix) }}
+        device_name: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
       fail-fast: false
 
     steps:

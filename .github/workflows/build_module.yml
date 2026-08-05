@@ -6,9 +6,11 @@ on:
       device_name:
         description: 'Target Device Codename'
         required: true
+        type: string
         default: 'komodo_beta17q2'
       commit_submodule:
         description: 'Commit updated submodule pointer back to main repo?'
+        required: false
         type: boolean
         default: true
   schedule:
@@ -40,7 +42,7 @@ jobs:
 
       - name: Commit & Push Submodule Pointer
         id: commit_step
-        if: github.event_name == 'schedule' || inputs.commit_submodule == true
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' || github.event.inputs.commit_submodule == true }}
         run: |
           git add source-code
           if ! git diff --cached --quiet; then
@@ -98,9 +100,9 @@ jobs:
       - name: Calculate Matrix Target
         id: set_matrix
         run: |
-          INPUT_DEVICE="${{ inputs.device_name }}"
+          INPUT_DEVICE="${{ github.event.inputs.device_name }}"
           TARGET_DEVICE="${INPUT_DEVICE:-komodo_beta17q2}"
-          echo "matrix=[\"$TARGET_DEVICE\"]" >> $GITHUB_OUTPUT
+          echo "matrix={\"device_name\":[\"$TARGET_DEVICE\"]}" >> $GITHUB_OUTPUT
 
   build:
     name: Build & Release Module
@@ -109,8 +111,7 @@ jobs:
     permissions:
       contents: write
     strategy:
-      matrix:
-        device_name: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
       fail-fast: false
 
     steps:
@@ -199,13 +200,13 @@ jobs:
 
           BODY_NOTES=$(cat <<'EOF'
 
-  ## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
-  #### Module
-  - File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
-  - File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
-  #### Firmware
-  - Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
-  EOF
+## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
+#### Module
+- File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
+- File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
+#### Firmware
+- Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
+EOF
           )
 
           EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body || echo "")

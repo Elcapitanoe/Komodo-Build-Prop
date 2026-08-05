@@ -66,6 +66,9 @@ jobs:
       id: ${{ steps.create_release.outputs.id }}
       tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Determine Tag Name
         id: get_tag_name
         run: |
@@ -79,13 +82,14 @@ jobs:
         run: |
           TAG="${{ steps.get_tag_name.outputs.tag_name }}"
           TITLE="${{ steps.get_tag_name.outputs.friendly_tag_name }}"
+          REPO="${{ github.repository }}"
 
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --title "$TITLE" --notes "Automated release for $TITLE"
+          if ! gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
+            gh release create "$TAG" -R "$REPO" --title "$TITLE" --notes "Automated release for $TITLE"
           fi
 
-          RELEASE_ID=$(gh release view "$TAG" --json id -q .id)
-          UPLOAD_URL="https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets{?name,label}"
+          RELEASE_ID=$(gh release view "$TAG" -R "$REPO" --json id -q .id)
+          UPLOAD_URL="https://uploads.github.com/repos/${REPO}/releases/${RELEASE_ID}/assets{?name,label}"
 
           echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
           echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
@@ -165,13 +169,14 @@ jobs:
         run: |
           BASENAME="${{ steps.extract_and_build.outputs.module_base_name }}"
           BUILD_ID="${{ steps.extract_and_build.outputs.device_build_id }}"
+          REPO="${{ github.repository }}"
           echo "Checking if build ID ${BASENAME}_${BUILD_ID} already exists..."
 
-          RELEASES=$(gh release list --limit 100 --json tagName -q '.[].tagName')
+          RELEASES=$(gh release list -R "$REPO" --limit 100 --json tagName -q '.[].tagName')
           BUILD_EXISTS=false
 
           for TAG in $RELEASES; do
-            RELEASE_BODY=$(gh release view "$TAG" --json body -q .body || true)
+            RELEASE_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body || true)
             if [[ "$RELEASE_BODY" == *"${BASENAME}_${BUILD_ID}"* ]]; then
               echo "Build ID ${BASENAME}_${BUILD_ID} found in release $TAG."
               BUILD_EXISTS=true
@@ -186,8 +191,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ needs.prepare-build.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
           ASSET_PATH="./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip"
-          gh release upload "$TAG" "$ASSET_PATH" --clobber
+          gh release upload "$TAG" "$ASSET_PATH" -R "$REPO" --clobber
         if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
 
       - name: Update Release Notes Information

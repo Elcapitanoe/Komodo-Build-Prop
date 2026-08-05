@@ -1,0 +1,216 @@
+name: Build & Release Magisk Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_name:
+        description: 'Target Device Codename'
+        required: true
+        default: 'komodo_beta17q2'
+      commit_submodule:
+        description: 'Commit updated submodule pointer back to main repo?'
+        type: boolean
+        default: true
+  schedule:
+    - cron: '0 12 * * *' # Trigger daily at 12:00 UTC
+
+jobs:
+  sync-submodule:
+    name: Sync & Update Submodule Pointer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Update Submodule to Latest Remote Commit
+        run: |
+          git submodule update --init --remote --recursive
+
+      - name: Commit & Push Submodule Pointer
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' }}
+        run: |
+          if [ -n "$(git status --porcelain source-code)" ]; then
+            echo "Submodule changes detected. Committing and pushing pointer..."
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add source-code
+            git commit -m "chore: sync source-code submodule pointer [skip ci]"
+            git push origin main
+          else
+            echo "No submodule updates found. Skipping commit."
+          fi
+
+  prepare-build:
+    name: Create Release Container
+    needs: sync-submodule
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      id: ${{ steps.create_release.outputs.id }}
+      tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
+    steps:
+      - name: Determine Tag Name
+        id: get_tag_name
+        run: |
+          echo "tag_name=$(date '+%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "friendly_tag_name=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
+          release_name: ${{ steps.get_tag_name.outputs.friendly_tag_name }}
+          draft: false
+          prerelease: false
+
+  build-matrix:
+    name: Determine Build Targets
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set_matrix.outputs.matrix }}
+    steps:
+      - name: Calculate Matrix Target
+        id: set_matrix
+        run: |
+          INPUT_DEVICE="${{ github.event.inputs.device_name }}"
+          TARGET_DEVICE="${INPUT_DEVICE:-komodo_beta17q2}"
+          echo "matrix=[\"$TARGET_DEVICE\"]" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build & Release Module
+    needs: [sync-submodule, prepare-build, build-matrix]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        device_name: ${{ JSON(needs.build-matrix.outputs.matrix) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout Repository with Submodules
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Ensure Submodules Updated
+        run: |
+          git pull origin main
+          git submodule update --init --recursive
+
+      - name: Install APT Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aria2 p7zip-full dos2unix zip
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Payload Dumper
+        run: |
+          pip install ./source-code/payload_dumper/
+
+      - name: Download & Setup imjtool
+        run: |
+          aria2c -d source-code -o imjtool "http://newandroidbook.com/tools/imjtool"
+          chmod +x source-code/imjtool
+
+      - name: Make Scripts Executable
+        run: |
+          chmod +x source-code/*.sh
+
+      - name: Download Latest OTA Build for ${{ matrix.device_name }}
+        working-directory: source-code
+        run: |
+          ./download_latest_ota_build.sh ${{ matrix.device_name }}
+
+      - name: Extract Images and Build Module
+        id: extract_and_build
+        working-directory: source-code
+        run: |
+          ./extract_images.sh
+
+      - name: Check If Module Build ID Exists in Release
+        id: check_build_id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          BASENAME="${{ steps.extract_and_build.outputs.module_base_name }}"
+          BUILD_ID="${{ steps.extract_and_build.outputs.device_build_id }}"
+          echo "Checking if build ID ${BASENAME}_${BUILD_ID} already exists..."
+
+          RELEASES=$(gh release list --limit 100 --json tagName -q '.[].tagName')
+          BUILD_EXISTS=false
+
+          for TAG in $RELEASES; do
+            RELEASE_BODY=$(gh release view "$TAG" --json body -q .body || true)
+            if [[ "$RELEASE_BODY" == *"${BASENAME}_${BUILD_ID}"* ]]; then
+              echo "Build ID ${BASENAME}_${BUILD_ID} found in release $TAG."
+              BUILD_EXISTS=true
+              break
+            fi
+          done
+
+          echo "BUILD_EXISTS=$BUILD_EXISTS" >> $GITHUB_OUTPUT
+
+      - name: Upload Module Asset to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare-build.outputs.upload_url }}
+          asset_path: ./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip
+          asset_name: ${{ steps.extract_and_build.outputs.module_base_name }}.zip
+          asset_content_type: application/zip
+        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
+
+      - name: Update Release Notes Information
+        uses: irongut/EditRelease@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          id: ${{ needs.prepare-build.outputs.id }}
+          replacebody: false
+          body: |
+            ## ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})
+            #### Module
+            - File name: `${{ steps.extract_and_build.outputs.module_base_name }}.zip`
+            - File hash (SHA256): `${{ steps.extract_and_build.outputs.module_hash }}`
+            #### Firmware
+            - Build Description: `${{ steps.extract_and_build.outputs.device_build_description }}`
+        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
+
+      - name: Send Built Module to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MODULE_PATH: "./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip"
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing. Skipping Telegram upload."
+            exit 0
+          fi
+
+          CAPTION=$(echo -e "*New Magisk Module Built!*\n\nDevice: ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})\nDescription: ${{ steps.extract_and_build.outputs.device_build_description }}\nSHA256: \`${{ steps.extract_and_build.outputs.module_hash }}\`")
+
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F chat_id="$TELEGRAM_CHAT_ID" \
+            -F document=@"$MODULE_PATH" \
+            -F parse_mode="Markdown" \
+            -F caption="$CAPTION"
+        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'

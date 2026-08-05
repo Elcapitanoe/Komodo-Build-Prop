@@ -12,7 +12,7 @@ on:
         type: boolean
         default: true
   schedule:
-    - cron: '0 12 15 * *' # Trigger monthly on the 15th at 12:00 UTC
+    - cron: '0 12 15 * *'
 
 jobs:
   sync-submodule:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Commit & Push Submodule Pointer
         id: commit_step
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.commit_submodule == 'true' }}
+        if: github.event_name == 'schedule' || inputs.commit_submodule == true
         run: |
           git add source-code
           if ! git diff --cached --quiet; then
@@ -98,7 +98,7 @@ jobs:
       - name: Calculate Matrix Target
         id: set_matrix
         run: |
-          INPUT_DEVICE="${{ github.event.inputs.device_name }}"
+          INPUT_DEVICE="${{ inputs.device_name }}"
           TARGET_DEVICE="${INPUT_DEVICE:-komodo_beta17q2}"
           echo "matrix=[\"$TARGET_DEVICE\"]" >> $GITHUB_OUTPUT
 

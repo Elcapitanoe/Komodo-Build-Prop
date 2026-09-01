@@ -46,62 +46,21 @@ jobs:
         run: |
           git add source-code
           if ! git diff --cached --quiet; then
-            echo "Submodule pointer changes detected. Committing and pushing..."
             git config --global user.name "github-actions[bot]"
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "chore: sync source-code submodule pointer [skip ci]"
             git push origin main
             echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           else
-            echo "No submodule pointer updates found. Skipping commit."
             echo "commit_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-  prepare-build:
-    name: Create Release Container
+  build:
+    name: Build & Release Module
     needs: sync-submodule
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Determine Tag Name
-        id: get_tag_name
-        run: |
-          echo "tag_name=$(date '+%Y%m%d')" >> $GITHUB_OUTPUT
-          echo "friendly_tag_name=$(date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-      - name: Create or Get GitHub Release
-        id: create_release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.get_tag_name.outputs.tag_name }}"
-          TITLE="${{ steps.get_tag_name.outputs.friendly_tag_name }}"
-          REPO="${{ github.repository }}"
-
-          if ! gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
-            gh release create "$TAG" -R "$REPO" --title "$TITLE" --notes "Automated release for $TITLE"
-          fi
-
-          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
-
-  build:
-    name: Build & Release Module
-    needs: [sync-submodule, prepare-build]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        device_name: [ "${{ github.event.inputs.device_name || 'komodo_beta17q2' }}" ]
-      fail-fast: false
-
     steps:
       - name: Checkout Repository with Submodules
         uses: actions/checkout@v4
@@ -110,111 +69,120 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install APT Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y aria2 p7zip-full dos2unix zip
+          sudo apt-get install -y p7zip-full e2fsprogs erofs-utils lz4 cpio \
+            dos2unix aria2 curl xxd python3 python3-pip jq
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Payload Dumper
+      - name: Install Python Dependencies
         run: |
-          pip install ./source-code/payload_dumper/
-
-      - name: Download & Setup imjtool
-        run: |
-          aria2c -d source-code -o imjtool "http://newandroidbook.com/tools/imjtool"
-          chmod +x source-code/imjtool
+          pip3 install payload_dumper
+          which payload_dumper || echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Make Scripts Executable
-        run: |
-          chmod +x source-code/*.sh
-
-      - name: Download Latest OTA Build for ${{ matrix.device_name }}
         working-directory: source-code
         run: |
-          ./download_latest_ota_build.sh ${{ matrix.device_name }}
+          chmod +x *.sh module_files/*.sh 2>/dev/null || chmod +x *.sh
 
-      - name: Extract Images and Build Module
-        id: extract_and_build
+      - name: Download OTA for ${{ github.event.inputs.device_name || 'komodo_beta17q2' }}
         working-directory: source-code
         run: |
-          ./extract_images.sh
+          bash download_latest_ota_build.sh ${{ github.event.inputs.device_name || 'komodo_beta17q2' }}
 
-      - name: Check If Module Build ID Exists in Release
-        id: check_build_id
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
+      - name: Extract and Build
+        working-directory: source-code
         run: |
-          BASENAME="${{ steps.extract_and_build.outputs.module_base_name }}"
-          BUILD_ID="${{ steps.extract_and_build.outputs.device_build_id }}"
-          REPO="${{ github.repository }}"
-          echo "Checking if build ID ${BASENAME}_${BUILD_ID} already exists..."
+          bash extract_images.sh
 
-          RELEASES=$(gh release list -R "$REPO" --limit 100 --json tagName -q '.[].tagName')
-          BUILD_EXISTS=false
-
-          for TAG in $RELEASES; do
-            RELEASE_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body || true)
-            if [[ "$RELEASE_BODY" == *"${BASENAME}_${BUILD_ID}"* ]]; then
-              echo "Build ID ${BASENAME}_${BUILD_ID} found in release $TAG."
-              BUILD_EXISTS=true
-              break
-            fi
-          done
-
-          echo "BUILD_EXISTS=$BUILD_EXISTS" >> $GITHUB_OUTPUT
-
-      - name: Upload Module Asset to GitHub Release
+      - name: Check for Duplicates & Prepare Release Asset
+        id: check
+        working-directory: source-code
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ needs.prepare-build.outputs.tag_name }}"
-          REPO="${{ github.repository }}"
-          ASSET_PATH="./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip"
-          gh release upload "$TAG" "$ASSET_PATH" -R "$REPO" --clobber
-        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
-
-      - name: Update Release Notes Information
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ needs.prepare-build.outputs.tag_name }}"
-          REPO="${{ github.repository }}"
-          DEV_NAME="${{ steps.extract_and_build.outputs.device_name }}"
-          DEV_CODE="${{ steps.extract_and_build.outputs.device_codename }}"
-          FILE_NAME="${{ steps.extract_and_build.outputs.module_base_name }}.zip"
-          FILE_HASH="${{ steps.extract_and_build.outputs.module_hash }}"
-          BUILD_DESC="${{ steps.extract_and_build.outputs.device_build_description }}"
-
-          BODY_NOTES=$(printf "\n\n## %s (%s)\n#### Module\n- File name: \`%s\`\n- File hash (SHA256): \`%s\`\n#### Firmware\n- Build Description: \`%s\`\n" "$DEV_NAME" "$DEV_CODE" "$FILE_NAME" "$FILE_HASH" "$BUILD_DESC")
-
-          EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body 2>/dev/null || echo "")
-          NEW_BODY="${EXISTING_BODY}${BODY_NOTES}"
-
-          gh release edit "$TAG" -R "$REPO" --notes "$NEW_BODY"
-        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'
-
-      - name: Send Built Module to Telegram
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          MODULE_PATH: "./source-code/${{ steps.extract_and_build.outputs.module_base_name }}.zip"
-        run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram secrets missing. Skipping Telegram upload."
+          zip=$(find . -maxdepth 1 -name "*.zip" -type f -print -quit 2>/dev/null)
+          if [ -z "$zip" ]; then
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          CAPTION=$(echo -e "*New Magisk Module Built!*\n\nDevice: ${{ steps.extract_and_build.outputs.device_name }} (${{ steps.extract_and_build.outputs.device_codename }})\nDescription: ${{ steps.extract_and_build.outputs.device_build_description }}\nSHA256: \`${{ steps.extract_and_build.outputs.module_hash }}\`")
+          name=$(basename "$zip")
+          EXISTING=$(mktemp)
+          trap 'rm -f "$EXISTING"' EXIT
+
+          gh release list -R "${{ github.repository }}" --limit 100 --json tagName --jq '.[].tagName' 2>/dev/null | \
+            while IFS= read -r tag; do
+              [ -n "$tag" ] || continue
+              gh release view "$tag" -R "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null >> "$EXISTING" || true
+            done
+
+          if grep -qxF "$name" "$EXISTING" 2>/dev/null; then
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+            rm -f "$zip"
+            exit 0
+          fi
+
+          codename=$(echo "$name" | cut -d_ -f1 | tr '[:upper:]' '[:lower:]')
+          prop=$(find extracted_images -maxdepth 2 -name "module.prop" -path "*/${codename}-ota-*" 2>/dev/null | head -1)
+          prop_dir=$(dirname "$prop")
+          desc=""
+          device_name=""
+          if [ -f "$prop" ]; then
+            desc=$(grep '^description=' "$prop" | cut -d= -f2- | head -1)
+            device_name=$(grep -m1 '^ro.product.model=' "$prop_dir/system.prop" 2>/dev/null | cut -d= -f2- | head -1)
+          fi
+          [ -z "$device_name" ] && device_name="${codename^}"
+
+          zip_hash=$(sha256sum "$zip" | awk '{print $1}')
+
+          mkdir -p upload
+          mv "$zip" upload/
+
+          echo "has_new=true" >> "$GITHUB_OUTPUT"
+          echo "zip_path=source-code/upload/$name" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$zip_hash" >> "$GITHUB_OUTPUT"
+          echo "device_name=$device_name" >> "$GITHUB_OUTPUT"
+          echo "description=$desc" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to GitHub Release
+        if: steps.check.outputs.has_new == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="$(date '+%Y%m%d')"
+          TITLE="$(date '+%Y-%m-%d')"
+          REPO="${{ github.repository }}"
+
+          BODY=$(printf "## %s\n- File: \`%s\`\n- SHA256: \`%s\`\n- Description: %s\n" \
+            "${{ steps.check.outputs.device_name }}" \
+            "${{ steps.check.outputs.zip_name }}" \
+            "${{ steps.check.outputs.sha256 }}" \
+            "${{ steps.check.outputs.description }}")
+
+          if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${{ steps.check.outputs.zip_path }}" -R "$REPO" --clobber
+            EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body 2>/dev/null || echo "")
+            gh release edit "$TAG" -R "$REPO" --notes "${EXISTING_BODY}"$'\n\n'"${BODY}"
+          else
+            gh release create "$TAG" "${{ steps.check.outputs.zip_path }}" -R "$REPO" --title "$TITLE" --notes "$BODY"
+          fi
+
+      - name: Send Built Module to Telegram
+        if: steps.check.outputs.has_new == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            exit 0
+          fi
+
+          CAPTION=$(echo -e "*New Magisk Module Built!*\n\nDevice: ${{ steps.check.outputs.device_name }}\nFile: \`${{ steps.check.outputs.zip_name }}\`\nSHA256: \`${{ steps.check.outputs.sha256 }}\`\nDescription: ${{ steps.check.outputs.description }}")
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
             -F chat_id="$TELEGRAM_CHAT_ID" \
-            -F document=@"$MODULE_PATH" \
+            -F document=@"${{ steps.check.outputs.zip_path }}" \
             -F parse_mode="Markdown" \
             -F caption="$CAPTION"
-        if: steps.check_build_id.outputs.BUILD_EXISTS == 'false'

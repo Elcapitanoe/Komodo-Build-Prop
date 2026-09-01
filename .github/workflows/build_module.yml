@@ -117,6 +117,7 @@ jobs:
         working-directory: source-code
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_DEVICE: ${{ matrix.device }}
         run: |
           zip=$(find . -maxdepth 1 -name "*.zip" -type f -print -quit 2>/dev/null)
           if [ -z "$zip" ]; then
@@ -163,7 +164,7 @@ jobs:
             --arg device_name "$device_name" \
             --arg description "$desc" \
             '{codename: $codename, zip_name: $zip_name, sha256: $sha256, device_name: $device_name, description: $description}' \
-            > "upload/metadata-${matrix.device}.json"
+            > "upload/metadata-${TARGET_DEVICE}.json"
 
           echo "has_new=true" >> "$GITHUB_OUTPUT"
 

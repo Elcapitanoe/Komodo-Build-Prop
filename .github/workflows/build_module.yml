@@ -207,23 +207,32 @@ jobs:
           TITLE="$(date '+%Y-%m-%d')"
           REPO="${{ github.repository }}"
 
-          BODY=""
-          for meta in new_modules/metadata-*.json; do
-            [ -f "$meta" ] || continue
-            d_name=$(jq -r '.device_name' "$meta")
-            z_name=$(jq -r '.zip_name' "$meta")
-            s256=$(jq -r '.sha256' "$meta")
-            desc=$(jq -r '.description' "$meta")
+          python3 -c "
+          import glob, json, subprocess
 
-            BODY+=$(printf "## %s\n- File: \`%s\`\n- SHA256: \`%s\`\n- Description: %s\n\n" "$d_name" "$z_name" "$s256" "$desc")
-          done
+          dev_entries = {}
+          for f in sorted(glob.glob('new_modules/metadata-*.json')):
+              with open(f) as jf:
+                  data = json.load(jf)
+                  dev = data['device_name']
+                  entry = f\"File: \`{data['zip_name']}\`\nSHA256: \`{data['sha256']}\`\nDescription: {data['description']}\n\n\"
+                  dev_entries.setdefault(dev, []).append(entry)
+
+          body = ''
+          for dev, entries in dev_entries.items():
+              body += f'# {dev}\n\n' + ''.join(entries)
+
+          with open('/tmp/release_body.md', 'w') as bf:
+              bf.write(body.strip() + '\n')
+          "
 
           if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
             gh release upload "$TAG" new_modules/*.zip -R "$REPO" --clobber
             EXISTING_BODY=$(gh release view "$TAG" -R "$REPO" --json body -q .body 2>/dev/null || echo "")
-            gh release edit "$TAG" -R "$REPO" --notes "${EXISTING_BODY}"$'\n\n'"${BODY}"
+            NEW_BODY=$(cat /tmp/release_body.md)
+            gh release edit "$TAG" -R "$REPO" --notes "${EXISTING_BODY}"$'\n\n'"${NEW_BODY}"
           else
-            gh release create "$TAG" new_modules/*.zip -R "$REPO" --title "$TITLE" --notes "$BODY"
+            gh release create "$TAG" new_modules/*.zip -R "$REPO" --title "$TITLE" --notes-file /tmp/release_body.md
           fi
 
           echo "has_new=true" >> "$GITHUB_OUTPUT"

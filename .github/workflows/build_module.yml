@@ -14,7 +14,7 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: '0 12 15 * *'
+    - cron: '0 0 * * 0'
 
 jobs:
   build-and-release:

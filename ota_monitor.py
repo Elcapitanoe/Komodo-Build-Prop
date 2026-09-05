@@ -119,12 +119,14 @@ def main():
         with open(STATE_FILE, "w") as f:
             json.dump(state, f, indent=2)
             
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
-            print("updated=true", file=fh)
+        if os.environ.get('GITHUB_OUTPUT'):
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+                print("updated=true", file=fh)
     else:
         log("INFO", "Scan complete. No new updates found for any configured device.")
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
-            print("updated=false", file=fh)
+        if os.environ.get('GITHUB_OUTPUT'):
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+                print("updated=false", file=fh)
 
 if __name__ == "__main__":
     main()

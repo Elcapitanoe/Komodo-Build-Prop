@@ -49,6 +49,35 @@ Expected output: `Pixel 9 Pro XL`
 
 For Play Integrity status, use the official checker app from Google Play.
 
+## Developer CLI & Automation
+
+This repository includes a standalone Python CLI toolchain (`komodo-tools`) for automated OTA release tracking, checksum operations, and Telegram notifications.
+
+### Setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+### Usage
+
+```bash
+# Scan upstream Google OTA releases
+komodo-tools ota scan --devices komodo
+
+# Generate SHA-256 checksums for release files
+komodo-tools checksum generate file1.zip file2.zip
+
+# Verify SHA-256 checksum against file
+komodo-tools checksum verify file1.zip
+
+# Run tests and linting
+pytest
+ruff check .
+```
+
 ## Changelog
 See the [CHANGELOG.md](CHANGELOG.md) file for a complete history of changes, fingerprint updates, and bug fixes.
 

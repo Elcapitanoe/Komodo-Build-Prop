@@ -5,36 +5,43 @@ on:
   schedule:
     - cron: '0 * * * *'
 
+permissions:
+  contents: write
+
 jobs:
   monitor-ota:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write 
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Python Environment
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' 
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: Install Dependencies
-        run: pip install requests
+      - name: Install package
+        run: pip install .
 
-      - name: Execute Monitor Logic
+      - name: Run OTA monitor
         id: run_monitor
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python ota_monitor.py
+        run: komodo-tools ota scan
 
-      - name: Persist State (Git Commit)
+      - name: Persist updated state
         if: steps.run_monitor.outputs.updated == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ota_state.json
-          git commit -m "audit: update OTA state registry [skip ci]"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(ota): update OTA state registry [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi

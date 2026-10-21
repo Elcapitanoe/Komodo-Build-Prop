@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-10-21]
+- **Pixel 9 Pro XL (Komodo Beta)**: `Komodo_beta_DP11.261002.005.zip`
+  - SHA256: `278ee04866fe40ff7068f6af5f0bcbb5ff179f3542b178bea2d22ad3967002fa`
+
 ## [2026-10-03]
 - **Pixel 9 Pro XL (Komodo Beta)**: `Komodo_beta_DP11.260918.006.zip`
   - SHA256: `4ae2c6df2c084b22acffbd4d990e30efcbe9c8eb29172037a54b12aaf6e5d049`

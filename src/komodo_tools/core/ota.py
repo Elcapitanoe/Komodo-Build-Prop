@@ -36,6 +36,14 @@ DEFAULT_COOKIES = {
 }
 
 
+class ManifestFetchError(RuntimeError):
+    """Raised when one or more OTA manifest sources cannot be fetched."""
+
+    def __init__(self, failed_urls: list[str]) -> None:
+        self.failed_urls = tuple(failed_urls)
+        super().__init__(f"Failed to fetch OTA manifest(s): {', '.join(failed_urls)}")
+
+
 def discover_active_beta_url(timeout: int = 10) -> str:
     """Dynamically discover the latest Android Beta/QPR OTA manifest URL.
 
@@ -125,14 +133,23 @@ def fetch_ota_manifest(url: str = DEFAULT_OTA_URL, timeout: int = 20) -> list[st
 
 
 def fetch_all_manifest_links(urls: list[str], timeout: int = 20) -> list[str]:
-    """Scrape multiple manifest URLs and return deduplicated OTA links."""
+    """Scrape multiple manifest URLs and return deduplicated OTA links.
+
+    A partial result is unsafe for state tracking because it can make valid,
+    previously-seen links disappear. Fail closed when any source fails.
+    """
     combined_links: set[str] = set()
+    failed_urls: list[str] = []
     for url in urls:
         try:
             links = fetch_ota_manifest(url=url, timeout=timeout)
             combined_links.update(links)
         except requests.RequestException as exc:
             logger.error("Failed to fetch manifest from %s: %s", url, exc)
+            failed_urls.append(url)
+
+    if failed_urls:
+        raise ManifestFetchError(failed_urls)
 
     return sorted(combined_links)
 
@@ -164,10 +181,21 @@ def load_state(state_path: Path) -> dict[str, list[str]]:
 
         if isinstance(data, list):
             logger.warning("Legacy list state format detected; wrapping under 'komodo' key.")
-            return {"komodo": data}
+            valid_links = [item for item in data if isinstance(item, str)]
+            if len(valid_links) != len(data):
+                logger.warning("Ignoring non-string entries in legacy state file.")
+            return {"komodo": valid_links}
 
         if isinstance(data, dict):
-            return {k: list(v) for k, v in data.items() if isinstance(v, list)}
+            state: dict[str, list[str]] = {}
+            for device, links in data.items():
+                if not isinstance(device, str) or not isinstance(links, list):
+                    continue
+                valid_links = [item for item in links if isinstance(item, str)]
+                if len(valid_links) != len(links):
+                    logger.warning("Ignoring non-string entries for device '%s'.", device)
+                state[device] = valid_links
+            return state
 
         logger.warning("Unrecognized state format in %s; defaulting to empty.", state_path)
         return {}
@@ -181,13 +209,19 @@ def save_state_atomic(state_path: Path, state: dict[str, Any]) -> None:
     state_path.parent.mkdir(parents=True, exist_ok=True)
     temp_dir = state_path.parent
 
-    with tempfile.NamedTemporaryFile("w", dir=temp_dir, delete=False, encoding="utf-8") as tf:
-        json.dump(state, tf, indent=2)
-        tf.flush()
-        os.fsync(tf.fileno())
-        temp_name = tf.name
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile("w", dir=temp_dir, delete=False, encoding="utf-8") as tf:
+            temp_path = Path(tf.name)
+            json.dump(state, tf, indent=2)
+            tf.flush()
+            os.fsync(tf.fileno())
 
-    Path(temp_name).replace(state_path)
+        temp_path.replace(state_path)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
     logger.info("State successfully persisted to %s", state_path)
 
 

@@ -11,12 +11,13 @@ on:
   schedule:
     - cron: '0 0 * * 0'
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -54,8 +55,9 @@ jobs:
 
       - name: Download OTA payload
         working-directory: engine
+        env:
+          RAW_TARGET: ${{ inputs.target || 'komodo' }}
         run: |
-          RAW_TARGET="${{ inputs.target || 'komodo' }}"
           RESOLVED_TAG=$(python3 -m src.devices --devices "$RAW_TARGET" | jq -r '.[0]')
           echo "Resolved build target: $RESOLVED_TAG"
           bash download_latest_ota_build.sh "$RESOLVED_TAG"

@@ -2,8 +2,11 @@
 
 import datetime
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -31,19 +34,38 @@ def fetch_release_info(
     return response.json()
 
 
-def download_asset(url: str, target_dir: Path) -> Path:
+def download_asset(url: str, target_dir: Path, filename: str | None = None) -> Path:
     """Download an asset binary from GitHub release URL."""
     target_dir.mkdir(parents=True, exist_ok=True)
-    filename = url.split("/")[-1]
+    filename = Path(filename or Path(urlparse(url).path).name).name
+    if not filename:
+        raise ValueError(f"Could not determine an asset filename from URL: {url}")
+
     target_file = target_dir / filename
 
     logger.info("Downloading asset %s -> %s", filename, target_file)
-    with requests.get(url, stream=True, timeout=60) as res:
-        res.raise_for_status()
-        with target_file.open("wb") as out:
-            for chunk in res.iter_content(chunk_size=65536):
-                if chunk:
-                    out.write(chunk)
+    temp_path: Path | None = None
+    try:
+        with requests.get(url, stream=True, timeout=60) as res:
+            res.raise_for_status()
+            with tempfile.NamedTemporaryFile(
+                "wb",
+                dir=target_dir,
+                prefix=f".{filename}.",
+                suffix=".part",
+                delete=False,
+            ) as out:
+                temp_path = Path(out.name)
+                for chunk in res.iter_content(chunk_size=65536):
+                    if chunk:
+                        out.write(chunk)
+                out.flush()
+                os.fsync(out.fileno())
+
+        temp_path.replace(target_file)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
 
     return target_file
 
@@ -87,7 +109,11 @@ def publish_release_to_telegram(
         if not download_url:
             continue
 
-        asset_path = download_asset(download_url, target_dir=assets_dir)
+        asset_path = download_asset(
+            download_url,
+            target_dir=assets_dir,
+            filename=asset_meta.get("name"),
+        )
         logger.info("Dispatching %s to Telegram...", asset_path.name)
         notifier.send_document(file_path=asset_path, caption=caption, parse_mode="HTML")
 

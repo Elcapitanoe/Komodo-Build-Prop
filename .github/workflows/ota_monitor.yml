@@ -5,12 +5,17 @@ on:
   schedule:
     - cron: '0 * * * *'
 
-permissions:
-  contents: write
+permissions: {}
+
+concurrency:
+  group: ota-monitor
+  cancel-in-progress: false
 
 jobs:
   monitor-ota:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository

@@ -15,6 +15,10 @@ TELEGRAM_API_BASE = "https://api.telegram.org"
 MAX_MESSAGE_LENGTH = 4000
 
 
+class TelegramAPIError(RuntimeError):
+    """Raised when Telegram returns an application-level error response."""
+
+
 class TelegramNotifier:
     """Production-grade Telegram Bot client for alerts and asset releases."""
 
@@ -40,6 +44,24 @@ class TelegramNotifier:
         return f"{TELEGRAM_API_BASE}/bot{self.token}/{method}"
 
     @staticmethod
+    def _parse_response(response: requests.Response) -> dict[str, Any]:
+        """Validate both HTTP and Telegram-level success responses."""
+        response.raise_for_status()
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise TelegramAPIError("Telegram returned invalid JSON.") from exc
+
+        if not isinstance(payload, dict) or payload.get("ok") is not True:
+            if isinstance(payload, dict):
+                description = payload.get("description", "unknown Telegram API error")
+            else:
+                description = "invalid Telegram response"
+            raise TelegramAPIError(description)
+
+        return payload
+
+    @staticmethod
     def escape(text: str) -> str:
         """Escape dynamic text for Telegram HTML parse mode."""
         return html.escape(text, quote=True)
@@ -62,9 +84,8 @@ class TelegramNotifier:
                     json=payload,
                     timeout=self.timeout,
                 )
-                response.raise_for_status()
-                responses.append(response.json())
-            except requests.RequestException as exc:
+                responses.append(self._parse_response(response))
+            except (requests.RequestException, TelegramAPIError) as exc:
                 logger.error("Failed to send Telegram message: %s", exc)
                 raise
 
@@ -90,9 +111,8 @@ class TelegramNotifier:
                 response = self.session.post(
                     url, data=data, files=files, timeout=max(self.timeout, 60)
                 )
-                response.raise_for_status()
-                return response.json()
-        except requests.RequestException as exc:
+                return self._parse_response(response)
+        except (requests.RequestException, TelegramAPIError) as exc:
             logger.error("Failed to send document '%s' to Telegram: %s", file_path.name, exc)
             raise
 

@@ -3,10 +3,15 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+import requests
+
 from komodo_tools.core.ota import (
     DEFAULT_OTA_URL,
     DEFAULT_STABLE_URL,
+    ManifestFetchError,
     discover_active_beta_url,
+    fetch_all_manifest_links,
     filter_links_for_device,
     format_ota_notification,
     load_state,
@@ -45,6 +50,25 @@ def test_legacy_state_recovery(tmp_path: Path):
 
     loaded = load_state(state_file)
     assert loaded == {"komodo": ["https://example.com/legacy.zip"]}
+
+
+def test_state_ignores_non_string_links(tmp_path: Path):
+    state_file = tmp_path / "invalid_entries.json"
+    state_file.write_text(
+        '{"komodo": ["https://example.com/ota.zip", 42, null]}',
+        encoding="utf-8",
+    )
+
+    assert load_state(state_file) == {"komodo": ["https://example.com/ota.zip"]}
+
+
+def test_fetch_all_manifest_links_fails_closed_on_partial_failure():
+    with patch(
+        "komodo_tools.core.ota.fetch_ota_manifest",
+        side_effect=[["https://example.com/ota.zip"], requests.RequestException("offline")],
+    ):
+        with pytest.raises(ManifestFetchError):
+            fetch_all_manifest_links(["https://beta.example", "https://stable.example"])
 
 
 def test_format_ota_notification_escaping():

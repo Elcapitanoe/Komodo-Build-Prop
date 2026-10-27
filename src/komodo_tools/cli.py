@@ -9,6 +9,7 @@ from pathlib import Path
 from komodo_tools import __version__
 from komodo_tools.core.checksum import generate_checksum_file, verify_checksum
 from komodo_tools.core.ota import (
+    ManifestFetchError,
     fetch_all_manifest_links,
     filter_links_for_device,
     format_ota_notification,
@@ -47,7 +48,12 @@ def handle_ota_scan(args: argparse.Namespace) -> int:
     manifest_urls = resolve_manifest_urls(
         custom_url=args.url, include_stable=not args.no_stable
     )
-    all_links = fetch_all_manifest_links(urls=manifest_urls)
+    try:
+        all_links = fetch_all_manifest_links(urls=manifest_urls)
+    except ManifestFetchError as exc:
+        logging.error("OTA scan aborted; manifest fetch failed: %s", exc)
+        emit_github_output("updated", "false")
+        return 2
     current_state = load_state(state_path)
 
     new_updates: dict[str, list[str]] = {}
@@ -71,18 +77,29 @@ def handle_ota_scan(args: argparse.Namespace) -> int:
         token = os.environ.get("TELEGRAM_BOT_TOKEN")
         chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 
-        if token and chat_id and not args.dry_run:
-            try:
-                notifier = TelegramNotifier(token, chat_id)
-                notifier.send_message(message)
-                logging.info("Dispatched Telegram alert successfully.")
-            except Exception as exc:
-                logging.error("Failed to deliver Telegram notification: %s", exc)
-        else:
-            logging.info("Telegram notification skipped (dry-run or missing credentials).")
+        if args.dry_run:
+            logging.info("Telegram notification and state persistence skipped (dry-run).")
+            emit_github_output("updated", "false")
+            return 0
 
-        if not args.dry_run:
-            save_state_atomic(state_path, updated_state)
+        if not token or not chat_id:
+            logging.error(
+                "Cannot persist OTA state while Telegram credentials are missing; "
+                "the update would be lost."
+            )
+            emit_github_output("updated", "false")
+            return 2
+
+        try:
+            notifier = TelegramNotifier(token, chat_id)
+            notifier.send_message(message)
+            logging.info("Dispatched Telegram alert successfully.")
+        except Exception as exc:
+            logging.error("Failed to deliver Telegram notification: %s", exc)
+            emit_github_output("updated", "false")
+            return 2
+
+        save_state_atomic(state_path, updated_state)
 
         emit_github_output("updated", "true")
     else:
@@ -93,14 +110,16 @@ def handle_ota_scan(args: argparse.Namespace) -> int:
 
 
 def handle_checksum_generate(args: argparse.Namespace) -> int:
+    had_error = False
     for target in args.files:
         path = Path(target)
         if not path.is_file():
             logging.warning("Skipping non-existent file: %s", path)
+            had_error = True
             continue
         out_file = generate_checksum_file(path)
         print(f"Generated: {out_file}")
-    return 0
+    return 1 if had_error else 0
 
 
 def handle_checksum_verify(args: argparse.Namespace) -> int:

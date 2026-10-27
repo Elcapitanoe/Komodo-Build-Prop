@@ -1,33 +1,47 @@
 """Cryptographic checksum utilities for release artifacts."""
 
 import hashlib
+import hmac
+import os
+import tempfile
 from pathlib import Path
 
 
 def calculate_sha256(file_path: Path) -> str:
-    """Calculate the SHA-256 hash of a file using chunked binary reading."""
+    """Calculate the SHA-256 hash of a file."""
     if not file_path.is_file():
         raise FileNotFoundError(f"Target file not found: {file_path}")
 
-    hasher = hashlib.sha256()
     with file_path.open("rb") as stream:
-        if hasattr(hashlib, "file_digest"):
-            return hashlib.file_digest(stream, "sha256").hexdigest().lower()
-        while chunk := stream.read(65536):
-            hasher.update(chunk)
-    return hasher.hexdigest().lower()
+        return hashlib.file_digest(stream, "sha256").hexdigest().lower()
 
 
 def generate_checksum_file(file_path: Path) -> Path:
     """Generate a standard .sha256 checksum file for the target file."""
     digest = calculate_sha256(file_path)
     output_path = file_path.parent / f"{file_path.name}.sha256"
-    temp_path = file_path.parent / f"{file_path.name}.sha256.tmp"
-
     # Standard coreutils sha256sum format: "<hash>  <filename>\n"
     content = f"{digest}  {file_path.name}\n"
-    temp_path.write_text(content, encoding="utf-8")
-    temp_path.replace(output_path)
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            dir=file_path.parent,
+            prefix=f".{file_path.name}.",
+            suffix=".tmp",
+            delete=False,
+            encoding="utf-8",
+        ) as stream:
+            temp_path = Path(stream.name)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+
+        temp_path.replace(output_path)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
     return output_path
 
 
@@ -65,4 +79,4 @@ def verify_checksum(
 
     expected_hash = parse_checksum_file(checksum_path)
     actual_hash = calculate_sha256(file_path)
-    return expected_hash == actual_hash, expected_hash, actual_hash
+    return hmac.compare_digest(expected_hash, actual_hash), expected_hash, actual_hash

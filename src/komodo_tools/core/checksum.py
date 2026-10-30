@@ -20,7 +20,7 @@ def generate_checksum_file(file_path: Path) -> Path:
     """Generate a standard .sha256 checksum file for the target file."""
     digest = calculate_sha256(file_path)
     output_path = file_path.parent / f"{file_path.name}.sha256"
-    # Standard coreutils sha256sum format: "<hash>  <filename>\n"
+    # Keep the output compatible with sha256sum.
     content = f"{digest}  {file_path.name}\n"
     temp_path: Path | None = None
     try:

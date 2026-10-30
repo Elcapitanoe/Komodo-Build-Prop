@@ -101,7 +101,7 @@ class TelegramNotifier:
         url = self._api_url("sendDocument")
         data = {
             "chat_id": self.chat_id,
-            "caption": caption[:1024],  # Telegram caption character limit
+            "caption": caption[:1024],  # Telegram's caption limit.
             "parse_mode": parse_mode,
         }
 
@@ -134,7 +134,7 @@ class TelegramNotifier:
                     current_chunk = [line]
                     current_len = len(line)
                 else:
-                    # Single line exceeds limit: hard split
+                    # Hard-split a line longer than the limit.
                     chunks.append(line[:limit])
                     current_chunk = [line[limit:]]
                     current_len = len(current_chunk[0])

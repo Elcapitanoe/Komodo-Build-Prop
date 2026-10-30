@@ -97,11 +97,11 @@ def test_discover_active_beta_url_upstream_mock():
 
 
 def test_resolve_manifest_urls():
-    # Custom URL overrides auto discovery
+    # A custom URL skips discovery.
     custom = resolve_manifest_urls(custom_url="https://custom.com/ota")
     assert custom == ["https://custom.com/ota"]
 
-    # Default includes discovered beta and stable
+    # The default scan includes Beta and Stable.
     with patch(
         "komodo_tools.core.ota.discover_active_beta_url",
         return_value=DEFAULT_OTA_URL,

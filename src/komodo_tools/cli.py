@@ -74,8 +74,8 @@ def handle_ota_scan(args: argparse.Namespace) -> int:
     if new_updates:
         message = format_ota_notification(new_updates)
 
-        token = os.environ.get("TELEGRAM_BOT_TOKEN")
-        chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
         if args.dry_run:
             logging.info("Telegram notification and state persistence skipped (dry-run).")
@@ -83,12 +83,13 @@ def handle_ota_scan(args: argparse.Namespace) -> int:
             return 0
 
         if not token or not chat_id:
-            logging.error(
-                "Cannot persist OTA state while Telegram credentials are missing; "
-                "the update would be lost."
+            logging.warning(
+                "Telegram credentials are not configured; skipping Telegram notification "
+                "and persisting the OTA state."
             )
-            emit_github_output("updated", "false")
-            return 2
+            save_state_atomic(state_path, updated_state)
+            emit_github_output("updated", "true")
+            return 0
 
         try:
             notifier = TelegramNotifier(token, chat_id)
@@ -142,13 +143,15 @@ def handle_checksum_verify(args: argparse.Namespace) -> int:
 
 
 def handle_release_telegram(args: argparse.Namespace) -> int:
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     gh_token = os.environ.get("GITHUB_TOKEN")
 
     if not token or not chat_id:
-        logging.error("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID environment variables are required.")
-        return 1
+        logging.warning(
+            "Telegram credentials are not configured; skipping release distribution successfully."
+        )
+        return 0
 
     repo = args.repo or os.environ.get("GITHUB_REPOSITORY", "Elcapitanoe/Komodo-Build-Prop")
     tag = args.tag or None
@@ -179,7 +182,6 @@ def create_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
-    # Subcommand: ota scan
     ota_parser = subparsers.add_parser("ota", help="OTA monitoring operations")
     ota_sub = ota_parser.add_subparsers(dest="ota_action", required=True)
     scan_parser = ota_sub.add_parser("scan", help="Scan upstream OTA manifest")
@@ -209,7 +211,6 @@ def create_parser() -> argparse.ArgumentParser:
         help="Perform scan without writing state or notifying",
     )
 
-    # Subcommand: checksum
     chk_parser = subparsers.add_parser("checksum", help="Cryptographic checksum operations")
     chk_sub = chk_parser.add_subparsers(dest="checksum_action", required=True)
 
@@ -220,7 +221,6 @@ def create_parser() -> argparse.ArgumentParser:
     ver_parser.add_argument("file", help="Target file path")
     ver_parser.add_argument("--checksum-file", help="Optional path to .sha256 file")
 
-    # Subcommand: release telegram
     rel_parser = subparsers.add_parser("release", help="Release pipeline operations")
     rel_sub = rel_parser.add_subparsers(dest="release_action", required=True)
 

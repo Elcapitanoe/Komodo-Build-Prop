@@ -42,7 +42,7 @@ def test_verify_checksum_mismatch(tmp_path: Path):
     test_file.write_bytes(b"original content")
     chk_file = generate_checksum_file(test_file)
 
-    # Tamper file
+    # Modify the file after creating its checksum.
     test_file.write_bytes(b"modified content")
 
     is_valid, exp, act = verify_checksum(test_file, chk_file)

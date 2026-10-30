@@ -20,7 +20,7 @@ UPSTREAM_STATE_URL = (
     "https://raw.githubusercontent.com/Elcapitanoe/Build-Prop-BETA/main/data/state.json"
 )
 
-# Matches both Beta (/developers/android/.../images/ota/...) and Stable (/dl/android/aosp/...)
+# Covers both Beta and Stable OTA URL formats.
 OTA_REGEX = re.compile(
     r"https://dl\.google\.com/(?:developers/android/[a-zA-Z0-9]+/images/ota|dl/android/aosp)/[a-zA-Z0-9_.-]+\.zip"
 )
@@ -52,7 +52,7 @@ def discover_active_beta_url(timeout: int = 10) -> str:
     2. Scrape developer.android.com/about/versions for latest major and QPR branch.
     3. Fallback to DEFAULT_OTA_URL.
     """
-    # 1. Check upstream state definition
+    # Prefer the upstream state registry.
     try:
         res = requests.get(UPSTREAM_STATE_URL, timeout=timeout)
         if res.status_code == 200:
@@ -64,7 +64,7 @@ def discover_active_beta_url(timeout: int = 10) -> str:
     except Exception as exc:
         logger.debug("Failed to query upstream state (%s); proceeding to web discovery", exc)
 
-    # 2. Autonomous web discovery on developer.android.com
+    # Fall back to Android version-page discovery.
     try:
         base = "https://developer.android.com"
         res = requests.get(

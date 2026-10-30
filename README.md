@@ -102,6 +102,20 @@ pytest
 ruff check .
 ```
 
+Telegram credentials are optional for automation. If `TELEGRAM_BOT_TOKEN` or
+`TELEGRAM_CHAT_ID` is not configured, the OTA monitor still persists its updated
+state in the repository and exits successfully while skipping Telegram delivery.
+Telegram API or network failures remain errors so an undelivered notification is
+not silently marked as successful.
+
+### Automated Komodo builds
+
+The `Build Komodo Pixel Props (Upstream)` workflow polls the upstream
+`Build-Prop-BETA` state hourly. It only invokes the upstream builder when a new
+upstream build ID is not already present in this repository's releases. The
+builder always receives the codename `komodo`; the current Beta version is
+resolved automatically by upstream and is never hardcoded here.
+
 ## Changelog
 See `CHANGELOG.md` for release history, build IDs, and property updates.
 

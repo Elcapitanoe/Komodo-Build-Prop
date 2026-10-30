@@ -1,179 +1,81 @@
-name: Build Module
+name: Build Komodo Pixel Props (Upstream)
 
 on:
   workflow_dispatch:
-    inputs:
-      target:
-        description: 'Target device codename'
-        required: true
-        type: string
-        default: 'komodo'
   schedule:
-    - cron: '0 0 * * 0'
+    # Poll upstream; build only unseen IDs.
+    - cron: '0 * * * *'
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
-  build-and-release:
+  check-upstream:
     runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      build_id: ${{ steps.check.outputs.build_id }}
+      target_version: ${{ steps.check.outputs.target_version }}
+    steps:
+      - name: Check latest upstream beta state
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          UPSTREAM_STATE_URL: https://raw.githubusercontent.com/Elcapitanoe/Build-Prop-BETA/main/data/state.json
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          state_file=$(mktemp)
+          trap 'rm -f "$state_file"' EXIT
+          curl --fail --silent --show-error --location --retry 3 \
+            --connect-timeout 15 --max-time 30 \
+            "$UPSTREAM_STATE_URL" > "$state_file"
+
+          build_id=$(jq -er '.fingerprint.build_id // empty' "$state_file")
+          active_url=$(jq -er '.active_target.url // empty' "$state_file")
+          target_version=$(jq -er '
+            .active_target as $target |
+            if ($target.qpr // null) == null
+            then "Android \($target.major)"
+            else "Android \($target.major) QPR\($target.qpr)"
+            end
+          ' "$state_file")
+
+          case "$active_url" in
+            https://developer.android.com/about/versions/*/download-ota)
+              ;;
+            *)
+              echo "::error::Upstream active target is not a supported Beta URL: $active_url"
+              exit 1
+              ;;
+          esac
+
+          existing_assets=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[].assets[].name' 2>/dev/null || true)
+
+          if printf '%s\n' "$existing_assets" | grep -Fq -- "$build_id"; then
+            echo "Build $build_id is already released; skipping upstream build."
+            should_build=false
+          else
+            echo "New upstream build detected: $build_id ($target_version)."
+            should_build=true
+          fi
+
+          echo "build_id=$build_id" >> "$GITHUB_OUTPUT"
+          echo "target_version=$target_version" >> "$GITHUB_OUTPUT"
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+
+  build-and-release:
+    needs: check-upstream
+    if: needs.check-upstream.outputs.should_build == 'true'
     permissions:
       contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Checkout build engine
-        uses: actions/checkout@v4
-        with:
-          repository: Elcapitanoe/Build-Prop-BETA
-          ref: main
-          submodules: recursive
-          path: engine
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y p7zip-full e2fsprogs erofs-utils lz4 cpio \
-            dos2unix aria2 curl xxd jq
-
-      - name: Install engine dependencies
-        run: |
-          pip install -r engine/requirements.txt
-          pip install --break-system-packages ./engine/payload_dumper 2>/dev/null || pip install ./engine/payload_dumper
-          which payload_dumper || echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Configure script permissions
-        run: chmod +x engine/*.sh engine/module_files/*.sh 2>/dev/null || chmod +x engine/*.sh
-
-      - name: Download OTA payload
-        working-directory: engine
-        env:
-          RAW_TARGET: ${{ inputs.target || 'komodo' }}
-        run: |
-          RESOLVED_TAG=$(python3 -m src.devices --devices "$RAW_TARGET" | jq -r '.[0]')
-          echo "Resolved build target: $RESOLVED_TAG"
-          bash download_latest_ota_build.sh "$RESOLVED_TAG"
-
-      - name: Extract payload and compile module
-        working-directory: engine
-        run: bash extract_images.sh
-
-      - name: Verify build artifact
-        id: check_artifact
-        working-directory: engine
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          zip_path=$(find . -maxdepth 1 -name "*.zip" -type f -print -quit 2>/dev/null)
-          if [ -z "$zip_path" ]; then
-            echo "has_artifact=false" >> "$GITHUB_OUTPUT"
-            echo "No zip artifact generated."
-            exit 0
-          fi
-
-          zip_name=$(basename "$zip_path")
-          echo "Generated module: $zip_name"
-
-          existing_assets=$(gh release list -R "${{ github.repository }}" --limit 100 --json tagName --jq '.[].tagName' 2>/dev/null | \
-            while IFS= read -r tag; do
-              gh release view "$tag" -R "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null || true
-            done)
-
-          if echo "$existing_assets" | grep -qxF "$zip_name"; then
-            echo "Artifact $zip_name is already published in existing release. Skipping."
-            echo "has_artifact=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          mkdir -p ../dist
-          mv "$zip_path" "../dist/$zip_name"
-          sha256=$(sha256sum "../dist/$zip_name" | awk '{print $1}')
-
-          echo "has_artifact=true" >> "$GITHUB_OUTPUT"
-          echo "zip_name=$zip_name" >> "$GITHUB_OUTPUT"
-          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
-
-      - name: Publish GitHub release
-        if: steps.check_artifact.outputs.has_artifact == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ZIP_NAME: ${{ steps.check_artifact.outputs.zip_name }}
-          SHA256: ${{ steps.check_artifact.outputs.sha256 }}
-        run: |
-          TAG=$(date '+%Y%m%d')
-          TITLE=$(date '+%Y-%m-%d')
-          NOTES_FILE="/tmp/release_notes.md"
-
-          cat <<EOF > "$NOTES_FILE"
-          ## Google Pixel 9 Pro XL (Komodo)
-          - File: \`${ZIP_NAME}\`
-          - SHA256: \`${SHA256}\`
-          EOF
-
-          if gh release view "$TAG" -R "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "Release $TAG exists, updating assets..."
-            gh release upload "$TAG" "dist/$ZIP_NAME" -R "${{ github.repository }}" --clobber
-            gh release edit "$TAG" -R "${{ github.repository }}" --notes-file "$NOTES_FILE"
-          else
-            echo "Creating release $TAG..."
-            gh release create "$TAG" "dist/$ZIP_NAME" \
-              -R "${{ github.repository }}" \
-              --title "$TITLE" \
-              --notes-file "$NOTES_FILE"
-          fi
-
-      - name: Update CHANGELOG.md
-        if: steps.check_artifact.outputs.has_artifact == 'true'
-        env:
-          ZIP_NAME: ${{ steps.check_artifact.outputs.zip_name }}
-          SHA256: ${{ steps.check_artifact.outputs.sha256 }}
-        run: |
-          python3 -c "
-          import os, datetime
-
-          today = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
-          zip_name = os.environ['ZIP_NAME']
-          sha256 = os.environ['SHA256']
-
-          label = 'Pixel 9 Pro XL (Komodo Beta)' if 'beta' in zip_name.lower() else 'Pixel 9 Pro XL (Komodo)'
-          entry = f'- **{label}**: \`{zip_name}\`\n  - SHA256: \`{sha256}\`\n'
-          block = f'## [{today}]\n{entry}\n'
-
-          changelog_path = 'CHANGELOG.md'
-          if os.path.exists(changelog_path):
-              with open(changelog_path, 'r', encoding='utf-8') as f:
-                  body = f.read()
-          else:
-              body = '# Changelog\n\n'
-
-          if f'## [{today}]' in body:
-              if zip_name not in body:
-                  idx = body.index(f'## [{today}]')
-                  next_nl = body.find('\n', idx)
-                  body = body[:next_nl+1] + entry + body[next_nl+1:]
-          else:
-              if '\n## ' in body:
-                  idx = body.index('\n## ')
-                  body = body[:idx+1] + block + body[idx+1:]
-              else:
-                  body = body.rstrip() + '\n\n' + block
-
-          with open(changelog_path, 'w', encoding='utf-8') as f:
-              f.write(body)
-          "
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          if ! git diff --cached --quiet; then
-            git commit -m "docs(changelog): update release history [skip ci]"
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+    uses: Elcapitanoe/Build-Prop-BETA/.github/workflows/build.yml@main
+    with:
+      # Upstream resolves the current Beta version for komodo.
+      devices: komodo
+      prerelease: false
+    secrets: inherit
